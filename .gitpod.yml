@@ -8,6 +8,11 @@ tasks:
       unzip awscliv2.zip
       sudo ./aws/install
       cd $THEIA_WORKSPACE_ROOT
+      export AWS_ACCESS_KEY=$(gp env AWS_Access_Key)
+      export AWS_SECRET_KEY=$(gp env AWS_Secret_Key)
+      
+
+
       
 vscode:
   extensions:
