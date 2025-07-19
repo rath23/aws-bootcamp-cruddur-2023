@@ -1,16 +1,16 @@
-{
-   "AccountId": "651746472793",
-   "BudgetName": "Budget By Muneer",
-   "Notification": { 
-      "ComparisonOperator": "GREATER_THAN",
-      "NotificationType": "ACTUAL",
-      "Threshold": 80,
-      "ThresholdType": "PERCENTAGE"
-   },
-   "Subscribers": [ 
-      { 
-         "Address": "syyedmuneerahmad@gmail.com",
-         "SubscriptionType": "EMAIL"
-      }
-    ]
-}
+[
+    {
+        "Notification": {
+            "ComparisonOperator": "GREATER_THAN",
+            "NotificationType": "ACTUAL",
+            "Threshold": 80,
+            "ThresholdType": "PERCENTAGE"
+        },
+        "Subscribers": [
+            {
+                "Address": "syyedmuneerahmad@example.com",
+                "SubscriptionType": "EMAIL"
+            }
+        ]
+    }
+]

@@ -1,57 +1,31 @@
 {
-    "AccountId": "651746472793",
-    "Budget": {
-        "BudgetLimit": {
-            "Amount": "1",
-            "Unit": "USD"
-        },
-        "BudgetName": "Budget By Muneer",
-        "BudgetType": "COST",
-        "FilterExpression": {
-            "Dimensions": {
-                "Key": "AZ",
-                "Values": [
-                    "us-east-1"
-                ]
-            }
-        },
-        "Metrics": [
-            "UNBLENDED_COST"
-        ],
-        "TimePeriod": {
-            "Start": "2025-07-01T00:00:00Z",
-            "End": "2087-01-01T00:00:00Z"
-        },
-        "TimeUnit": "MONTHLY"
+    "BudgetLimit": {
+        "Amount": "1",
+        "Unit": "USD"
     },
-    "NotificationsWithSubscribers": [
-        {
-            "Notification": {
-                "ComparisonOperator": "GREATER_THAN",
-                "NotificationType": "ACTUAL",
-                "Threshold": 80,
-                "ThresholdType": "PERCENTAGE"
-            },
-            "Subscribers": [
-                {
-                    "Address": "syyedmuneerahmad@gmail.com",
-                    "SubscriptionType": "EMAIL"
-                }
-            ]
-        },
-        {
-            "Notification": {
-                "ComparisonOperator": "GREATER_THAN",
-                "NotificationType": "FORECASTED",
-                "Threshold": 90,
-                "ThresholdType": "PERCENTAGE"
-            },
-            "Subscribers": [
-                {
-                    "Address": "syyedmuneerahmad@gmail.com",
-                    "SubscriptionType": "EMAIL"
-                }
-            ]
-        }
-    ]
+    "BudgetName": "My Budget",
+    "BudgetType": "COST",
+    "CostFilters": {
+        "TagKeyValue": [
+            "user:Key$value1",
+            "user:Key$value2"
+        ]
+    },
+    "CostTypes": {
+        "IncludeCredit": true,
+        "IncludeDiscount": true,
+        "IncludeOtherSubscription": true,
+        "IncludeRecurring": true,
+        "IncludeRefund": true,
+        "IncludeSubscription": true,
+        "IncludeSupport": true,
+        "IncludeTax": true,
+        "IncludeUpfront": true,
+        "UseBlended": false
+    },
+    "TimePeriod": {
+        "Start": 1721347200,
+        "End": 3706473600
+    },
+    "TimeUnit": "MONTHLY"
 }
