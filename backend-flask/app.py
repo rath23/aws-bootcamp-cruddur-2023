@@ -12,6 +12,7 @@ from services.search_activities import *
 from services.message_groups import *
 from services.messages import *
 from services.create_message import *
+# from services.show_activity import *
 from services.show_activity import *
 
 #HoneyComb import 
@@ -29,7 +30,17 @@ provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
 
+#AWS X-ray-----------
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
+
+xray_url = os.getenv("AWS_XRAY_URL")
+xray_recorder.configure(service='backend-flask', dynamic_naming=xray_url)
+
+
 app = Flask(__name__)
+
+XRayMiddleware(app, xray_recorder)
 
 FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
