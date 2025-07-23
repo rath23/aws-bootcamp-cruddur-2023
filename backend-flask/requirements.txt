@@ -6,12 +6,17 @@ opentelemetry-exporter-otlp-proto-http
 opentelemetry-instrumentation-flask 
 opentelemetry-instrumentation-requests
 
+
+urllib3>=2.5.0 
 #aws-xray-sdk
 
 watchtower
 
+
 #RollBar
 blinker
 rollbar
-requests>=2.32.4 # not directly required, pinned by Snyk to avoid a vulnerability
-urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
+requests>=2.32.4 
+
+
+
