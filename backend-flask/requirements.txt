@@ -6,5 +6,13 @@ opentelemetry-exporter-otlp-proto-http
 opentelemetry-instrumentation-flask 
 opentelemetry-instrumentation-requests
 
-aws-xray-sdk
-urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
+
+urllib3>=2.5.0 
+#aws-xray-sdk
+
+watchtower
+
+#RollBar
+blinker
+rollbar
+
