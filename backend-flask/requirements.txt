@@ -16,5 +16,7 @@ watchtower
 #RollBar
 blinker
 rollbar
+requests>=2.32.4 
+
 
 
