@@ -6,5 +6,14 @@
 	},
 	"remoteEnv": {
 		"AWS_CLI_AUTO_PROMPT": "on-partial"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"ms-python.python"
+			]
+		}
+		
 	}
 }
