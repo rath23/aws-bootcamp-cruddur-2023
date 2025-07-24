@@ -16,23 +16,24 @@ import {
 } from "react-router-dom";
 import NotificationsFeedPage from './pages/NotificationsFeedPage';
 
-// CORRECT
+// In index.js or App.js
 import { Amplify } from 'aws-amplify';
+import awsExports from './aws-exports';
+Amplify.configure(awsExports);
 
 
-Amplify.configure({
-  Auth: {
-    region: process.env.REACT_APP_AWS_PROJECT_REGION,
-    userPoolId: process.env.REACT_APP_AWS_USER_POOLS_ID,
-    userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID,
-    Cognito: {
-      loginWith: {
-        oauth: {} // minimal empty object to prevent crash
-      }
-    }
-  }
-});
-
+// Amplify.configure({
+//   Auth: {
+//     region: process.env.REACT_APP_AWS_PROJECT_REGION,
+//     userPoolId: process.env.REACT_APP_AWS_USER_POOLS_ID,
+//     userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID,
+//     Cognito: {
+//       loginWith: {
+//         oauth: {} // minimal empty object to prevent crash
+//       }
+//     }
+//   }
+// });
 
 
 // Amplify.configure({
