@@ -4,7 +4,7 @@ import {ReactComponent as Logo} from '../components/svg/logo.svg';
 import { Link } from "react-router-dom";
 
 // [TODO] Authenication
-import { Auth } from 'aws-amplify';
+import { signUp } from '@aws-amplify/auth';
 
 export default function SignupPage() {
 
@@ -28,24 +28,36 @@ export default function SignupPage() {
   //   return false
   // }
 
-  const onsubmit = async (event) => {
-  setCognitoErrors('')
+const onsubmit = async (event) => {
   event.preventDefault();
+  setErrors('');
   try {
-    Auth.signIn(username, password)
-      .then(user => {
-        localStorage.setItem("access_token", user.signInUserSession.accessToken.jwtToken)
-        window.location.href = "/"
-      })
-      .catch(err => { console.log('Error!', err) });
+    const response = await signUp({
+      username: username,
+      password: password,
+      options: {
+        userAttributes: {
+          name: name,
+          email: email,
+          preferred_username: username
+        }
+      }
+    });
+
+    console.log('Signup success', response);
+    // Redirect to confirm page with email
+    window.location.href = `/confirm?email=${email}`;
   } catch (error) {
-    if (error.code == 'UserNotConfirmedException') {
-      window.location.href = "/confirm"
+    console.log('Signup error', error);
+    if (error.code === 'UsernameExistsException') {
+      setErrors('This username or email is already registered.');
+    } else {
+      setErrors(error.message || 'Signup failed');
     }
-    setErrors(error.message)
   }
-  return false
-}
+  return false;
+};
+
 
   
 

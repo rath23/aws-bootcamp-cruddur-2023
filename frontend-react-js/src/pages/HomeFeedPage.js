@@ -1,14 +1,14 @@
 import './HomeFeedPage.css';
 import React from "react";
-import { Auth } from 'aws-amplify';
+
+// ✅ Modular v6 imports
+import { getCurrentUser, fetchUserAttributes } from '@aws-amplify/auth';
 
 import DesktopNavigation  from '../components/DesktopNavigation';
 import DesktopSidebar     from '../components/DesktopSidebar';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityForm from '../components/ActivityForm';
 import ReplyForm from '../components/ReplyForm';
-
-
 
 export default function HomeFeedPage() {
   const [activities, setActivities] = React.useState([]);
@@ -20,49 +20,42 @@ export default function HomeFeedPage() {
 
   const loadData = async () => {
     try {
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`
-      const res = await fetch(backend_url, {
-        method: "GET"
-      });
-      let resJson = await res.json();
+      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
+      const res = await fetch(backend_url, { method: "GET" });
+      const resJson = await res.json();
       if (res.status === 200) {
-        setActivities(resJson)
+        setActivities(resJson);
       } else {
-        console.log(res)
+        console.log(res);
       }
     } catch (err) {
       console.log(err);
     }
   };
 
-
   const checkAuth = async () => {
-  Auth.currentAuthenticatedUser({
-    // Optional, By default is false. 
-    // If set to true, this call will send a 
-    // request to Cognito to get the latest user data
-    bypassCache: false 
-  })
-  .then((user) => {
-    console.log('user',user);
-    return Auth.currentAuthenticatedUser()
-  }).then((cognito_user) => {
-      setUser({
-        display_name: cognito_user.attributes.name,
-        handle: cognito_user.attributes.preferred_username
-      })
-  })
-  .catch((err) => console.log(err));
-};
+    try {
+      const cognitoUser = await getCurrentUser();
+      const attributes = await fetchUserAttributes();
 
-  React.useEffect(()=>{
-    //prevents double call
+      setUser({
+        display_name: attributes.name,
+        handle: attributes.preferred_username,
+      });
+
+      console.log("User: ", cognitoUser);
+    } catch (error) {
+      console.log("Not signed in", error);
+    }
+  };
+
+  React.useEffect(() => {
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
 
     loadData();
     checkAuth();
-  }, [])
+  }, []);
 
   return (
     <article>
