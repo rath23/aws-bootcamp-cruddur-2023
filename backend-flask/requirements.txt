@@ -8,7 +8,7 @@ opentelemetry-instrumentation-requests
 
 
 urllib3>=2.5.0 
-#aws-xray-sdk
+aws-xray-sdk
 
 watchtower
 
