@@ -20,8 +20,6 @@ export default function HomeFeedPage() {
 
  const loadData = async () => {
   const token = localStorage.getItem("access_token");
-  console.log("Access token used:", token);
-
   try {
     const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
 
@@ -56,8 +54,6 @@ export default function HomeFeedPage() {
         display_name: attributes.name,
         handle: attributes.preferred_username,
       });
-
-      console.log("User: ", cognitoUser);
     } catch (error) {
       console.log("Not signed in", error);
     }

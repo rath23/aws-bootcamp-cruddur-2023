@@ -3,7 +3,7 @@ from flask import request
 from flask_cors import CORS, cross_origin
 import os
 
-from lib.auth import requires_auth 
+from lib.auth import requires_auth ,try_get_current_user
 # from lib.auth import CognitoJWTValidator
 
 from services.home_activities import *
@@ -66,11 +66,6 @@ from flask import got_request_exception
 
 app = Flask(__name__)
 
-# validator = CognitoJWTValidator(
-#     region='us-east-1',  # Replace with your region
-#     user_pool_id='your-user-pool-id',  # Replace with your user pool ID
-#     app_client_id='your-app-client-id'  # Replace with your app client ID
-# )
 
 rollbar_access_token = os.getenv('ROLLBAR_ACCESS_TOKEN')
 
@@ -179,12 +174,15 @@ def data_create_message():
 
 @app.route("/api/activities/home", methods=['GET'])
 @xray_recorder.capture('activities_home')
-@requires_auth
 def data_home():
-    user = request.user  # decoded from JWT
-    # app.logger.info(user)
-    data = HomeActivities.run(logger=LOGGER,User=user) 
-    return data, 200
+  user = try_get_current_user()
+  if user:
+      # Authenticated user: return full data
+      data = HomeActivities.run(logger=LOGGER, User=user)
+  else:
+      # Unauthenticated user: return limited data
+      data = HomeActivities.run(logger=LOGGER, User=None, public_only=True)
+  return data, 200
 
 @app.route("/api/activities/notifications", methods=['GET'])
 @xray_recorder.capture('activities_notifications')
