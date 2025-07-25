@@ -3,6 +3,9 @@ from flask import request
 from flask_cors import CORS, cross_origin
 import os
 
+from lib.auth import requires_auth 
+# from lib.auth import CognitoJWTValidator
+
 from services.home_activities import *
 from services.notifications_activities import *
 from services.user_activities import *
@@ -63,6 +66,12 @@ from flask import got_request_exception
 
 app = Flask(__name__)
 
+# validator = CognitoJWTValidator(
+#     region='us-east-1',  # Replace with your region
+#     user_pool_id='your-user-pool-id',  # Replace with your user pool ID
+#     app_client_id='your-app-client-id'  # Replace with your app client ID
+# )
+
 rollbar_access_token = os.getenv('ROLLBAR_ACCESS_TOKEN')
 
 #Roll bar
@@ -115,15 +124,22 @@ cors = CORS(
   app, 
   resources={r"/api/*": {"origins": origins}},
   headers=['Content-Type', 'Authorization'], 
-  expose_headers='Authorization',
+  expose_headers=["Authorization"],
   methods="OPTIONS,GET,HEAD,POST"
 )
+
+
 
 #CloudLogs 
 @app.after_request
 def after_request(response):
     timestamp = strftime('[%Y-%b-%d %H:%M]')
     LOGGER.error('%s %s %s %s %s %s', timestamp, request.remote_addr, request.method, request.scheme, request.full_path, response.status)
+
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+    response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
   
 @app.route("/api/message_groups", methods=['GET'])
@@ -163,9 +179,12 @@ def data_create_message():
 
 @app.route("/api/activities/home", methods=['GET'])
 @xray_recorder.capture('activities_home')
+@requires_auth
 def data_home():
-  data = HomeActivities.run(logger=LOGGER)
-  return data, 200
+    user = request.user  # decoded from JWT
+    # app.logger.info(user)
+    data = HomeActivities.run(logger=LOGGER,User=user) 
+    return data, 200
 
 @app.route("/api/activities/notifications", methods=['GET'])
 @xray_recorder.capture('activities_notifications')

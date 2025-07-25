@@ -18,30 +18,34 @@ export default function HomeFeedPage() {
   const [user, setUser] = React.useState(null);
   const dataFetchedRef = React.useRef(false);
 
-  const loadData = async () => {
-    const token = localStorage.getItem("access_token");
+ const loadData = async () => {
+  const token = localStorage.getItem("access_token");
+  console.log("Access token used:", token);
 
-    try {
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
+  try {
+    const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
 
-      const res = await fetch(backend_url, {
-        method: "GET",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const resJson = await res.json();
-      if (res.status === 200) {
-        setActivities(resJson);
-      } else {
-        console.log(res);
+    const res = await fetch(backend_url, {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       }
-    } catch (err) {
-      console.log(err);
+    });
+
+    const resJson = await res.json();
+
+    if (res.status === 200) {
+      setActivities(resJson);
+    } else {
+      console.log('Error response:', res);
+      console.log('Error body:', resJson); // Add this for debugging
     }
-  };
+  } catch (err) {
+    console.error('Fetch error:', err);
+  }
+};
+
 
   const checkAuth = async () => {
     try {

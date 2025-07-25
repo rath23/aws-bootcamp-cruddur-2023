@@ -18,5 +18,9 @@ blinker
 rollbar
 requests>=2.32.4 
 
+python-jose
+
+
+
 
 
