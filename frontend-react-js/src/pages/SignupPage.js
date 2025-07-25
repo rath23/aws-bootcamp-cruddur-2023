@@ -1,12 +1,16 @@
 import './SignupPage.css';
 import React from "react";
 import {ReactComponent as Logo} from '../components/svg/logo.svg';
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
+
+
 
 // [TODO] Authenication
 import { signUp } from '@aws-amplify/auth';
 
 export default function SignupPage() {
+
+  const navigate = useNavigate();
 
   // Username is Eamil
   const [name, setName] = React.useState('');
@@ -33,7 +37,7 @@ const onsubmit = async (event) => {
   setErrors('');
   try {
     const response = await signUp({
-      username: username,
+      username: email,
       password: password,
       options: {
         userAttributes: {
@@ -46,7 +50,7 @@ const onsubmit = async (event) => {
 
     console.log('Signup success', response);
     // Redirect to confirm page with email
-    window.location.href = `/confirm?email=${email}`;
+    navigate('/confirm', { state: { email } }); 
   } catch (error) {
     console.log('Signup error', error);
     if (error.code === 'UsernameExistsException') {
