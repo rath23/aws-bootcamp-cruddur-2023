@@ -20,6 +20,9 @@ requests>=2.32.4
 
 python-jose
 
+psycopg[binary]
+psycopg[pool]
+
 
 
 
