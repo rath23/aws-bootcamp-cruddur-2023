@@ -58,6 +58,8 @@ services:
       - '5432:5432'
     volumes: 
       - db:/var/lib/postgresql/data
+    networks:
+    - internal-network
   dynamodb-local:
     # https://stackoverflow.com/questions/67533058/persist-local-dynamodb-data-in-volumes-lack-permission-unable-to-open-databa
     # We needed to add user:root to get this working.
@@ -70,6 +72,7 @@ services:
     volumes:
       - "./docker/dynamodb:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
+
   xray-daemon:
     image: "amazon/aws-xray-daemon"
     environment:
