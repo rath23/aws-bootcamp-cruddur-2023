@@ -112,20 +112,21 @@ XRayMiddleware(app, xray_recorder)
 FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
 
-if os.getenv('FLASK_ENV') == 'development':
-    CORS(app, supports_credentials=True)
-else:
-    frontend = os.getenv('FRONTEND_URL')
-    backend = os.getenv('BACKEND_URL')
-    origins = [frontend, backend]
-    CORS(
-        app,
-        resources={r"/api/*": {"origins": origins}},
-        supports_credentials=True,
-        headers=['Content-Type', 'Authorization'],
-        expose_headers=["Authorization"],
-        methods="OPTIONS,GET,HEAD,POST"
-    )
+
+frontend = os.getenv('FRONTEND_URL')
+backend = os.getenv('BACKEND_URL')
+print(frontend);
+print(backend);
+
+origins = [frontend, backend]
+CORS(
+    app,
+    resources={r"/api/*": {"origins": origins}},
+    supports_credentials=True,
+    headers=['Content-Type', 'Authorization'],
+    expose_headers=["Authorization"],
+    methods="OPTIONS,GET,HEAD,POST"
+)
 
 
 
@@ -138,7 +139,6 @@ def after_request(response):
 
     origin = request.headers.get('Origin')
     LOGGER.info(f'CORS Request Origin: {origin}')
-    response.headers.add('Access-Control-Allow-Origin', origin or '*')
     response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
     response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
@@ -220,7 +220,7 @@ def data_search():
 @app.route("/api/activities", methods=['POST','OPTIONS'])
 @cross_origin()
 def data_activities():
-  user_handle  = 'andrewbrown'
+  user_handle  = request.json['user_h']
   message = request.json['message']
   ttl = request.json['ttl']
   model = CreateActivity.run(message, user_handle, ttl)

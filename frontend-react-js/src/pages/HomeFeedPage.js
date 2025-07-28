@@ -49,7 +49,8 @@ export default function HomeFeedPage() {
     try {
       const cognitoUser = await getCurrentUser();
       const attributes = await fetchUserAttributes();
-
+      localStorage.setItem("handle", attributes.preferred_username);
+      localStorage.setItem("display_name", attributes.name);
       setUser({
         display_name: attributes.name,
         handle: attributes.preferred_username,
