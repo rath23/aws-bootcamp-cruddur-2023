@@ -1,19 +1,20 @@
 {
-	"image": "mcr.microsoft.com/devcontainers/universal:2",
-	"features": {
-		"ghcr.io/devcontainers/features/aws-cli:1": {},
-		"ghcr.io/devcontainers/features/postgres-client:1": {}
-	},
+  "name": "AWS Bootcamp Environment",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
   "postCreateCommand": "bash .devcontainer/setup.sh",
-	"remoteEnv": {
-		"AWS_CLI_AUTO_PROMPT": "on-partial"
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-azuretools.vscode-docker",
-				"ms-python.python"
-			]
-		}
-	}
+  "remoteEnv": {
+    "AWS_CLI_AUTO_PROMPT": "on-partial",
+    "PATH": "/usr/local/bin:${containerEnv:PATH}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "42Crunch.vscode-openapi",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
 }
