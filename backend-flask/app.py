@@ -139,10 +139,10 @@ def after_request(response):
 
     origin = request.headers.get('Origin')
     LOGGER.info(f'CORS Request Origin: {origin}')
-    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-    response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+    # response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+    # response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    # response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
   
 @app.route("/api/message_groups", methods=['GET'])
@@ -220,7 +220,7 @@ def data_search():
 @app.route("/api/activities", methods=['POST','OPTIONS'])
 @cross_origin()
 def data_activities():
-  user_handle  = request.json['user_h']
+  user_handle  = request.json['user_handle']
   message = request.json['message']
   ttl = request.json['ttl']
   model = CreateActivity.run(message, user_handle, ttl)
