@@ -112,16 +112,21 @@ XRayMiddleware(app, xray_recorder)
 FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
 
-frontend = os.getenv('FRONTEND_URL')
-backend = os.getenv('BACKEND_URL')
-origins = [frontend, backend]
-cors = CORS(
-  app, 
-  resources={r"/api/*": {"origins": origins}},
-  headers=['Content-Type', 'Authorization'], 
-  expose_headers=["Authorization"],
-  methods="OPTIONS,GET,HEAD,POST"
-)
+if os.getenv('FLASK_ENV') == 'development':
+    CORS(app, supports_credentials=True)
+else:
+    frontend = os.getenv('FRONTEND_URL')
+    backend = os.getenv('BACKEND_URL')
+    origins = [frontend, backend]
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": origins}},
+        supports_credentials=True,
+        headers=['Content-Type', 'Authorization'],
+        expose_headers=["Authorization"],
+        methods="OPTIONS,GET,HEAD,POST"
+    )
+
 
 
 
@@ -131,6 +136,9 @@ def after_request(response):
     timestamp = strftime('[%Y-%b-%d %H:%M]')
     LOGGER.error('%s %s %s %s %s %s', timestamp, request.remote_addr, request.method, request.scheme, request.full_path, response.status)
 
+    origin = request.headers.get('Origin')
+    LOGGER.info(f'CORS Request Origin: {origin}')
+    response.headers.add('Access-Control-Allow-Origin', origin or '*')
     response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
     response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
