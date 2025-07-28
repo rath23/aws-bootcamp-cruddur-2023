@@ -17,9 +17,9 @@ sudo apt-get update
 sudo apt-get install -y postgresql-client-13 libpq-dev
 
 # Update RDS Security Group Rules
-if [ -f "$THEIA_WORKSPACE_ROOT/backend-flask/bin/rds-sg-rules-update" ]; then
+if [ -f "$CODESPACE_VSCODE_FOLDER/backend-flask/bin/rds-sg-rules-update" ]; then
     export GITPOD_IP=$(curl -s ifconfig.me)
-    source "$THEIA_WORKSPACE_ROOT/backend-flask/bin/rds-sg-rules-update"
+    source "$CODESPACE_VSCODE_FOLDER/backend-flask/bin/rds-sg-rules-update"
 fi
 
 echo "Environment setup complete!"
