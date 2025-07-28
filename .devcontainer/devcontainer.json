@@ -1,13 +1,18 @@
 {
-  "name": "Cruddur AWS Dev",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "postCreateCommand": "bash .devcontainer/bootstrap.sh",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "42Crunch.vscode-openapi",
-        "ms-azuretools.vscode-docker"
-      ]
-    }
-  }
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {
+		"ghcr.io/devcontainers/features/aws-cli:1": {}
+	},
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+	"remoteEnv": {
+		"AWS_CLI_AUTO_PROMPT": "on-partial"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"ms-python.python"
+			]
+		}
+	}
 }
