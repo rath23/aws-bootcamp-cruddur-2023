@@ -1,0 +1,8 @@
+Person 1: Hey! How’s everything going?
+Person 2: Pretty good! Just working on that new Flask project.
+Person 1: Oh cool, Flask with DynamoDB?
+Person 2: Yep! I'm using Boto3 to insert chat messages.
+Person 1: Nice. Did you set up a single-table design?
+Person 2: Yeah, grouped by users and messages with GSIs.
+Person 1: Sounds clean. Let me know if you want to test the frontend too.
+Person 2: Sure! I'll ping you once I deploy the backend.
