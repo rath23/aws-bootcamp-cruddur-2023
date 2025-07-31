@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 # Add parent path to import local db module
-current_path = os.path.dirname(os.path.abspath(__file__))
+current_path = os.path.dirname(os.path.abspath(__file__))  # path to bin/ddb
 parent_path = os.path.abspath(os.path.join(current_path, '..', '..'))
 sys.path.append(parent_path)
 from lib.db import db
@@ -34,11 +34,11 @@ def get_user_uuids():
     """
     users = db.query_array_json(sql, {
         'my_handle': 'muqeet',
-        'other_handle': 'muneer'
+        'other_handle': 'muneer009'
     })
     return {
         'my_user': next((u for u in users if u["handle"] == 'muqeet'), None),
-        'other_user': next((u for u in users if u["handle"] == 'muneer'), None)
+        'other_user': next((u for u in users if u["handle"] == 'muneer009'), None)
     }
 
 # -----------------------------
@@ -46,11 +46,23 @@ def get_user_uuids():
 # -----------------------------
 def create_message_group(client, message_group_uuid, my_user_uuid, last_message_at,
                          message, other_user_uuid, other_user_display_name, other_user_handle):
+    
+    print("🔍 Debug put_item values:")
+    print({
+        'PK': f"GRP#{my_user_uuid}",
+        'SK': last_message_at,
+        'message_group_uuid': message_group_uuid,
+        'message': message,
+        'user_uuid': other_user_uuid,
+        'user_display_name': other_user_display_name,
+        'user_handle': other_user_handle
+    })
+
     client.put_item(
         TableName='cruddur-messages',
         Item={
-            'pk': {'S': f"GRP#{my_user_uuid}"},
-            'sk': {'S': last_message_at},
+            'PK': {'S': f"GRP#{my_user_uuid}"},
+            'SK': {'S': last_message_at},
             'message_group_uuid': {'S': message_group_uuid},
             'message': {'S': message},
             'user_uuid': {'S': other_user_uuid},
@@ -62,14 +74,17 @@ def create_message_group(client, message_group_uuid, my_user_uuid, last_message_
 # -----------------------------
 # Create a chat message item
 # -----------------------------
-def create_message(client, message_group_uuid, created_at, message,
-                   my_user_uuid, my_user_display_name, my_user_handle):
+def create_message(client, message_group_uuid, created_at,
+                   message, my_user_uuid, my_user_display_name, my_user_handle):
+
+    print("🔍 Creating message:", message)
+    
     client.put_item(
         TableName='cruddur-messages',
         Item={
-            'pk': {'S': f"MSG#{message_group_uuid}"},
-            'sk': {'S': created_at},
-            'message_uuid': {'S': str(uuid.uuid4())},
+            'PK': {'S': f"MSG#{message_group_uuid}"},
+            'SK': {'S': created_at},
+            'message_group_uuid': {'S': message_group_uuid},
             'message': {'S': message},
             'user_uuid': {'S': my_user_uuid},
             'user_display_name': {'S': my_user_display_name},
@@ -111,8 +126,15 @@ if __name__ == "__main__":
     message_group_uuid = str(uuid.uuid4())
     users = get_user_uuids()
 
-    # Create message_group entries for both users
+    # ✅ Validate users
+    if not users['my_user'] or not users['other_user']:
+        print("❌ One or both users not found in PostgreSQL. Aborting seed.")
+        print("Fetched users:", users)
+        sys.exit(1)
+
+    # ✅ Create message_group entries for both users
     for u, other in [('my_user', 'other_user'), ('other_user', 'my_user')]:
+        print(f"➡️  Creating message group for {users[u]['handle']} with {users[other]['handle']}")
         create_message_group(
             client=ddb,
             message_group_uuid=message_group_uuid,
@@ -124,9 +146,11 @@ if __name__ == "__main__":
             message="this is a filler message"
         )
 
-    # Conversation content
-    with open('conversation.txt', 'r') as f:
+    # ✅ Load conversation text from same folder as this script
+    conversation_path = os.path.join(current_path, 'conversation.txt')
+    with open(conversation_path, 'r') as f:
         convo_text = f.read()
 
+    # ✅ Seed messages
     seed_conversation(convo_text, users, message_group_uuid, now)
     print("✅ Messages seeded successfully.")

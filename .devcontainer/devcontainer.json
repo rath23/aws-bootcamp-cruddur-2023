@@ -1,11 +1,10 @@
 {
   "name": "AWS Bootcamp Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "image": "mcr.microsoft.com/devcontainers/universal:2", // Keep this image
   "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
     "ghcr.io/devcontainers/features/common-utils:2": {},
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "18"
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
     }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
@@ -20,8 +19,5 @@
         "ms-azuretools.vscode-docker"
       ]
     }
-  },
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ]
+  }
 }

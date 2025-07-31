@@ -16,5 +16,23 @@
         "frontendreactjsf888976a": {}
       }
     }
+  },
+  "develop": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-frontendreactjs-develop-11c5b-authRole",
+      "UnauthRoleArn": "arn:aws:iam::651746472793:role/amplify-frontendreactjs-develop-11c5b-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::651746472793:role/amplify-frontendreactjs-develop-11c5b-authRole",
+      "Region": "ap-south-1",
+      "DeploymentBucketName": "amplify-frontendreactjs-develop-11c5b-deployment",
+      "UnauthRoleName": "amplify-frontendreactjs-develop-11c5b-unauthRole",
+      "StackName": "amplify-frontendreactjs-develop-11c5b",
+      "StackId": "arn:aws:cloudformation:ap-south-1:651746472793:stack/amplify-frontendreactjs-develop-11c5b/c509ccd0-6dd9-11f0-a174-0aa44c422ac7",
+      "AmplifyAppId": "dxcnl6w9xxwol"
+    },
+    "categories": {
+      "auth": {
+        "frontendreactjsf888976a": {}
+      }
+    }
   }
 }
