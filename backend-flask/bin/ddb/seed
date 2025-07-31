@@ -49,8 +49,8 @@ def create_message_group(client, message_group_uuid, my_user_uuid, last_message_
     
     print("🔍 Debug put_item values:")
     print({
-        'PK': f"GRP#{my_user_uuid}",
-        'SK': last_message_at,
+        'pk': f"GRP#{my_user_uuid}",
+        'sk': last_message_at,
         'message_group_uuid': message_group_uuid,
         'message': message,
         'user_uuid': other_user_uuid,
@@ -61,8 +61,8 @@ def create_message_group(client, message_group_uuid, my_user_uuid, last_message_
     client.put_item(
         TableName='cruddur-messages',
         Item={
-            'PK': {'S': f"GRP#{my_user_uuid}"},
-            'SK': {'S': last_message_at},
+            'pk': {'S': f"GRP#{my_user_uuid}"},
+            'sk': {'S': last_message_at},
             'message_group_uuid': {'S': message_group_uuid},
             'message': {'S': message},
             'user_uuid': {'S': other_user_uuid},
@@ -82,8 +82,8 @@ def create_message(client, message_group_uuid, created_at,
     client.put_item(
         TableName='cruddur-messages',
         Item={
-            'PK': {'S': f"MSG#{message_group_uuid}"},
-            'SK': {'S': created_at},
+            'pk': {'S': f"MSG#{message_group_uuid}"},
+            'sk': {'S': created_at},
             'message_group_uuid': {'S': message_group_uuid},
             'message': {'S': message},
             'user_uuid': {'S': my_user_uuid},

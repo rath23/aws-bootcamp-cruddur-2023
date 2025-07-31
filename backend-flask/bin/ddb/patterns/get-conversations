@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+import boto3
+import sys
+import json
+import datetime
+
+# Setup DynamoDB client attributes
+attrs = {
+    'endpoint_url': 'http://localhost:8000'  # Default to local DynamoDB
+}
+
+if len(sys.argv) == 2 and "prod" in sys.argv[1]:
+    attrs = {}  # Use real AWS DynamoDB
+
+# Create DynamoDB client
+dynamodb = boto3.client('dynamodb', **attrs)
+table_name = 'cruddur-messages'
+
+# Replace this with your actual group UUID or get from input
+message_group_uuid = "3c3dfd54-af5b-4cad-b8d4-9fc3686661b1"
+
+# Filter messages for the current year
+year = str(datetime.datetime.now().year)
+
+# Build the query parameters
+query_params = {
+    'TableName': table_name,
+    'ScanIndexForward': False,  # Newest first
+    'Limit': 20,
+    'ReturnConsumedCapacity': 'TOTAL',
+    'KeyConditionExpression': 'pk = :pk AND begins_with(sk, :year)',
+    'ExpressionAttributeValues': {
+        ':pk':   {'S': f"MSG#{message_group_uuid}"},
+        ':year': {'S': year}
+    }
+}
+
+# Execute the query
+response = dynamodb.query(**query_params)
+
+# Print raw response
+print("\n🔹 Query Response:")
+print(json.dumps(response, indent=2, sort_keys=True))
+
+# Print consumed capacity
+print("\n🔹 Consumed Capacity:")
+print(json.dumps(response['ConsumedCapacity'], indent=2, sort_keys=True))
+
+# Display messages in readable format
+print("\n📨 Messages:")
+items = response['Items']
+items.reverse()  # To show oldest to newest
+
+for item in items:
+    sender_handle = item['user_handle']['S']
+    message = item['message']['S']
+    timestamp = item['sk']['S']
+    dt_object = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z')
+    formatted_datetime = dt_object.strftime('%Y-%m-%d %I:%M %p')
+    print(f'{sender_handle:<15} {formatted_datetime:<22} {message[:60]}...')
