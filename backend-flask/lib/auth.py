@@ -53,12 +53,12 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token_auth_header()
-        logger.debug("token")
-        logger.debug(token)
+        if not token:
+            return jsonify({"message": "Missing or invalid Authorization header"}), 401  # ✅ safe exit
+
         try:
             unverified_header = jwt.get_unverified_header(token)
             rsa_key = {}
-
             for key in get_jwks():
                 if key["kid"] == unverified_header["kid"]:
                     rsa_key = {
@@ -70,8 +70,7 @@ def requires_auth(f):
                     }
 
             if not rsa_key:
-                print("No matching RSA key found for token.")
-                return jsonify({"message": "Unauthorized"}), 401
+                return jsonify({"message": "No matching key found"}), 401
 
             payload = jwt.decode(
                 token,

@@ -1,5 +1,4 @@
-from flask import Flask
-from flask import request
+from flask import Flask,request,jsonify
 from flask_cors import CORS, cross_origin
 import os
 
@@ -146,25 +145,36 @@ def after_request(response):
     return response
   
 @app.route("/api/message_groups", methods=['GET'])
+@requires_auth
 def data_message_groups():
-  user_handle  = 'andrewbrown'
-  model = MessageGroups.run(user_handle=user_handle)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
+    user_payload = getattr(request, "user", None)  # set by decorator
+    if not user_payload:
+        return jsonify({"message": "Unauthorized"}), 401
+    cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
+    handle = user_payload.get("custom:handle")
+    model = MessageGroups.run(cognito_user_id=cognito_sub)
+    if model.get('errors'):
+        return model['errors'], 422
     return model['data'], 200
 
-@app.route("/api/messages/@<string:handle>", methods=['GET'])
-def data_messages(handle):
-  user_sender_handle = 'andrewbrown'
-  user_receiver_handle = request.args.get('user_reciever_handle')
 
-  model = Messages.run(user_sender_handle=user_sender_handle, user_receiver_handle=user_receiver_handle)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
-  return
+@app.route("/api/messages/<string:message_group_uuid>", methods=['GET'])
+@requires_auth
+def data_messages(message_group_uuid):
+    user_payload = getattr(request, "user", None)  # set by decorator
+    if not user_payload:
+        return jsonify({"message": "Unauthorized"}), 401
+    cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
+    handle = user_payload.get("custom:handle")
+    model = Messages.run(
+        cognito_user_id=cognito_sub,
+        message_group_uuid=message_group_uuid
+      )
+    if model['errors'] is not None:
+      return model['errors'], 422
+    else:
+      return model['data'], 200
+
 
 @app.route("/api/messages", methods=['POST','OPTIONS'])
 @cross_origin()
