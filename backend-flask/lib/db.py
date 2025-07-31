@@ -68,6 +68,7 @@ class Db:
         cur.execute(wrapped_sql,params)
         json = cur.fetchone()
         return json[0]
+      
   # When we want to return an array of json objects
   def query_object_json(self,sql,params={}):
 
