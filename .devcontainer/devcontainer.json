@@ -1,16 +1,8 @@
 {
-  "name": "AWS Bootcamp Environment",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {},
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
-    }
-  },
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-  "remoteEnv": {
-    "AWS_CLI_AUTO_PROMPT": "on-partial",
-    "PATH": "/usr/local/bin:${containerEnv:PATH}"
+  "name": "cruddur-codespace",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
   },
   "customizations": {
     "vscode": {
@@ -20,7 +12,15 @@
       ]
     }
   },
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ]
+  "features": {
+    "docker-in-docker": "latest"
+  },
+  "containerEnv": {
+    "AWS_CLI_AUTO_PROMPT": "on-partial",
+    "LANG": "en_US.UTF-8",
+    "LC_ALL": "en_US.UTF-8"
+  },
+  "postCreateCommand": "echo 'export AWS_CLI_AUTO_PROMPT=on-partial' >> ~/.bashrc && echo 'export LANG=en_US.UTF-8' >> ~/.bashrc && echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc && (source /workspaces/${localWorkspaceFolderBasename}/backend-flask/bin/rds-sg-rules-update || true) && npm install -g @aws-amplify/cli || true",
+  "remoteUser": "root",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
 }

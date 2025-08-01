@@ -8,9 +8,10 @@ import botocore.exceptions
 class Ddb:
     @staticmethod
     def client():
-        endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+        endpoint_url = os.getenv("DYNAMODB_ENDPOINT")
         attrs = {'endpoint_url': endpoint_url} if endpoint_url else {}
         return boto3.client('dynamodb', **attrs)
+
 
     @staticmethod
     def list_message_groups(client, my_user_uuid, limit=20):

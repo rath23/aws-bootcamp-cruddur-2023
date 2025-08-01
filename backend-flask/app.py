@@ -1,8 +1,8 @@
-from flask import Flask,request,jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import os
 
-from lib.auth import requires_auth ,try_get_current_user
+from lib.auth import requires_auth, try_get_current_user
 
 from services.home_activities import *
 from services.notifications_activities import *
@@ -16,7 +16,7 @@ from services.create_message import *
 from services.show_activity import *
 from services.show_activity import *
 
-#HoneyComb import 
+# HoneyComb import
 from opentelemetry import trace
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
@@ -24,7 +24,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-#Cloud logs 
+# Cloud logs
 
 import watchtower
 import logging
@@ -34,7 +34,7 @@ from time import strftime
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
-cw_handler = watchtower.CloudWatchLogHandler(log_group='cruddur')
+cw_handler = watchtower.CloudWatchLogHandler(log_group="cruddur")
 LOGGER.addHandler(console_handler)
 LOGGER.addHandler(cw_handler)
 LOGGER.info("App started")
@@ -46,39 +46,38 @@ provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
 
-#AWS X-ray-----------
+# AWS X-ray-----------
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 
 xray_url = os.getenv("AWS_XRAY_URL")
-xray_recorder.configure(service='backend-flask', dynamic_naming=xray_url)
+xray_recorder.configure(service="backend-flask", dynamic_naming=xray_url)
 
-#RoolBAr--------------
+# RoolBAr--------------
 
 import rollbar
 import rollbar.contrib.flask
 from flask import got_request_exception
 
 
-
-
 app = Flask(__name__)
 
 
-rollbar_access_token = os.getenv('ROLLBAR_ACCESS_TOKEN')
+rollbar_access_token = os.getenv("ROLLBAR_ACCESS_TOKEN")
 
-#Roll bar
+# Roll bar
 with app.app_context():
     """init rollbar module"""
     rollbar.init(
         # access token
-        rollbar_access_token ,
+        rollbar_access_token,
         # environment name - any string, like 'production' or 'development'
-        'flasktest',
+        "flasktest",
         # server root directory, makes tracebacks prettier
         root=os.path.dirname(os.path.realpath(__file__)),
         # flask already sets up logging
-        allow_logging_basic_config=False)
+        allow_logging_basic_config=False,
+    )
 
     # send exceptions from `app` to rollbar, using flask's signal system.
     got_request_exception.connect(rollbar.contrib.flask.report_exception, app)
@@ -98,10 +97,11 @@ with app.app_context():
 
 #     # send exceptions from `app` to rollbar, using flask's signal system.
 #     got_request_exception.connect(rollbar.contrib.flask.report_exception, app)
-    
-@app.route('/rollbar/test')
+
+
+@app.route("/rollbar/test")
 def rollbar_test():
-    rollbar.report_message('Hello World!', 'warning')
+    rollbar.report_message("Hello World!", "warning")
     return "Hello World!"
 
 
@@ -111,34 +111,41 @@ FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
 
 
-frontend = os.getenv('FRONTEND_URL')
-backend = os.getenv('BACKEND_URL')
-print(frontend);
-print(backend);
+frontend = os.getenv("FRONTEND_URL")
+backend = os.getenv("BACKEND_URL")
+print(frontend)
+print(backend)
 
 origins = [frontend, backend]
 CORS(
     app,
     resources={r"/api/*": {"origins": origins}},
     supports_credentials=True,
-    headers=['Content-Type', 'Authorization'],
+    headers=["Content-Type", "Authorization"],
     expose_headers=["Authorization"],
-    methods="OPTIONS,GET,HEAD,POST"
+    methods="OPTIONS,GET,HEAD,POST",
 )
 
 
-
-
-#CloudLogs 
+# CloudLogs
 @app.after_request
 def after_request(response):
-    timestamp = strftime('[%Y-%b-%d %H:%M]')
-    LOGGER.error('%s %s %s %s %s %s', timestamp, request.remote_addr, request.method, request.scheme, request.full_path, response.status)
+    timestamp = strftime("[%Y-%b-%d %H:%M]")
+    LOGGER.error(
+        "%s %s %s %s %s %s",
+        timestamp,
+        request.remote_addr,
+        request.method,
+        request.scheme,
+        request.full_path,
+        response.status,
+    )
 
-    origin = request.headers.get('Origin')
-    LOGGER.info(f'CORS Request Origin: {origin}')
+    origin = request.headers.get("Origin")
+    LOGGER.info(f"CORS Request Origin: {origin}")
     return response
-  
+
+
 # @app.route("/api/message_groups", methods=['GET'])
 # @requires_auth
 # def data_message_groups():
@@ -152,42 +159,59 @@ def after_request(response):
 #         return model['errors'], 422
 #     return model['data'], 200
 
-@app.route("/api/message_groups", methods=['GET'])
+
+@app.route("/api/message_groups", methods=["GET"])
 @requires_auth
 def data_message_groups():
     try:
         user_payload = getattr(request, "user", None)
+        app.logger.info(
+            "Authenticated user",
+            extra={
+                "user_id": user_payload.get("sub"),
+                "handle": user_payload.get("custom:handle"),
+            },
+        )
+        app.logger.info(user_payload)
+
         if not user_payload:
-            return jsonify({
-                "error": "missing_user",
-                "message": "User information not found in token"
-            }), 422
+            return (
+                jsonify(
+                    {
+                        "error": "missing_user",
+                        "message": "User information not found in token",
+                    }
+                ),
+                422,
+            )
 
         cognito_sub = user_payload.get("sub")
         if not cognito_sub:
-            return jsonify({
-                "error": "invalid_token",
-                "message": "Token missing required claims (sub)"
-            }), 422
-
+            return (
+                jsonify(
+                    {
+                        "error": "invalid_token",
+                        "message": "Token missing required claims (sub)",
+                    }
+                ),
+                422,
+            )
+        app.logger.info(cognito_sub)
         model = MessageGroups.run(cognito_user_id=cognito_sub)
-        
-        if model.get('errors'):
-            return jsonify({
-                "error": "validation_error",
-                "details": model['errors']
-            }), 422
-            
-        return jsonify(model['data']), 200
+
+        if model.get("errors"):
+            return (
+                jsonify({"error": "validation_error", "details": model["errors"]}),
+                422,
+            )
+
+        return jsonify(model["data"]), 200
 
     except Exception as e:
-        return jsonify({
-            "error": "server_error",
-            "message": str(e)
-        }), 500
+        return jsonify({"error": "server_error", "message": str(e)}), 500
 
 
-@app.route("/api/messages/<string:message_group_uuid>", methods=['GET'])
+@app.route("/api/messages/<string:message_group_uuid>", methods=["GET"])
 @requires_auth
 def data_messages(message_group_uuid):
     user_payload = getattr(request, "user", None)  # set by decorator
@@ -196,95 +220,105 @@ def data_messages(message_group_uuid):
     cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
     handle = user_payload.get("custom:handle")
     model = Messages.run(
-        cognito_user_id=cognito_sub,
-        message_group_uuid=message_group_uuid
-      )
-    if model['errors'] is not None:
-      return model['errors'], 422
+        cognito_user_id=cognito_sub, message_group_uuid=message_group_uuid
+    )
+    if model["errors"] is not None:
+        return model["errors"], 422
     else:
-      return model['data'], 200
+        return model["data"], 200
 
 
-@app.route("/api/messages", methods=['POST','OPTIONS'])
+@app.route("/api/messages", methods=["POST", "OPTIONS"])
 @cross_origin()
 def data_create_message():
-  user_sender_handle = 'andrewbrown'
-  user_receiver_handle = request.json['user_receiver_handle']
-  message = request.json['message']
+    user_sender_handle = "andrewbrown"
+    user_receiver_handle = request.json["user_receiver_handle"]
+    message = request.json["message"]
 
-  model = CreateMessage.run(message=message,user_sender_handle=user_sender_handle,user_receiver_handle=user_receiver_handle)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
-  return
+    model = CreateMessage.run(
+        message=message,
+        user_sender_handle=user_sender_handle,
+        user_receiver_handle=user_receiver_handle,
+    )
+    if model["errors"] is not None:
+        return model["errors"], 422
+    else:
+        return model["data"], 200
+    return
 
-@app.route("/api/activities/home", methods=['GET'])
-@xray_recorder.capture('activities_home')
+
+@app.route("/api/activities/home", methods=["GET"])
+@xray_recorder.capture("activities_home")
 def data_home():
-  user = try_get_current_user()
-  if user:
-      # Authenticated user: return full data
-      data = HomeActivities.run(logger=LOGGER, User=user)
-  else:
-      # Unauthenticated user: return limited data
-      data = HomeActivities.run(logger=LOGGER, User=None, public_only=True)
-  return data, 200
+    user = try_get_current_user()
+    if user:
+        # Authenticated user: return full data
+        data = HomeActivities.run(logger=LOGGER, User=user)
+    else:
+        # Unauthenticated user: return limited data
+        data = HomeActivities.run(logger=LOGGER, User=None, public_only=True)
+    return data, 200
 
-@app.route("/api/activities/notifications", methods=['GET'])
-@xray_recorder.capture('activities_notifications')
+
+@app.route("/api/activities/notifications", methods=["GET"])
+@xray_recorder.capture("activities_notifications")
 def data_notifications():
-  data = NotificationsActivities.run()
-  return data, 200
+    data = NotificationsActivities.run()
+    return data, 200
 
 
-@app.route("/api/activities/@<string:handle>", methods=['GET'])
+@app.route("/api/activities/@<string:handle>", methods=["GET"])
 def data_handle(handle):
-  model = UserActivities.run(handle)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
+    model = UserActivities.run(handle)
+    if model["errors"] is not None:
+        return model["errors"], 422
+    else:
+        return model["data"], 200
 
-@app.route("/api/activities/search", methods=['GET'])
+
+@app.route("/api/activities/search", methods=["GET"])
 def data_search():
-  term = request.args.get('term')
-  model = SearchActivities.run(term)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
-  return
+    term = request.args.get("term")
+    model = SearchActivities.run(term)
+    if model["errors"] is not None:
+        return model["errors"], 422
+    else:
+        return model["data"], 200
+    return
 
-@app.route("/api/activities", methods=['POST','OPTIONS'])
+
+@app.route("/api/activities", methods=["POST", "OPTIONS"])
 @cross_origin()
 def data_activities():
-  user_handle  = request.json['user_handle']
-  message = request.json['message']
-  ttl = request.json['ttl']
-  model = CreateActivity.run(message, user_handle, ttl)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
-  return
+    user_handle = request.json["user_handle"]
+    message = request.json["message"]
+    ttl = request.json["ttl"]
+    model = CreateActivity.run(message, user_handle, ttl)
+    if model["errors"] is not None:
+        return model["errors"], 422
+    else:
+        return model["data"], 200
+    return
 
-@app.route("/api/activities/<string:activity_uuid>", methods=['GET'])
+
+@app.route("/api/activities/<string:activity_uuid>", methods=["GET"])
 def data_show_activity(activity_uuid):
-  data = ShowActivity.run(activity_uuid=activity_uuid)
-  return data, 200
+    data = ShowActivity.run(activity_uuid=activity_uuid)
+    return data, 200
 
-@app.route("/api/activities/<string:activity_uuid>/reply", methods=['POST','OPTIONS'])
+
+@app.route("/api/activities/<string:activity_uuid>/reply", methods=["POST", "OPTIONS"])
 @cross_origin()
 def data_activities_reply(activity_uuid):
-  user_handle  = 'andrewbrown'
-  message = request.json['message']
-  model = CreateReply.run(message, user_handle, activity_uuid)
-  if model['errors'] is not None:
-    return model['errors'], 422
-  else:
-    return model['data'], 200
-  return
+    user_handle = "andrewbrown"
+    message = request.json["message"]
+    model = CreateReply.run(message, user_handle, activity_uuid)
+    if model["errors"] is not None:
+        return model["errors"], 422
+    else:
+        return model["data"], 200
+    return
+
 
 if __name__ == "__main__":
-  app.run(debug=True)
+    app.run(debug=True)

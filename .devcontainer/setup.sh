@@ -18,15 +18,30 @@ echo "AWS CLI version:"
 aws --version
 
 ####################################
-# PostgreSQL Client Installation
+# PostgreSQL Client Installation with HTTPS and fallback
 ####################################
 echo "=== Installing PostgreSQL client ==="
-# Add PostgreSQL signing key and repo
+CODENAME=$(lsb_release -cs)
+PG_REPO_LINE="deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] https://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main"
+
+# Add signing key
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt \
-  $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list
+
+# Try adding the external PGDG repo and updating
+echo "$PG_REPO_LINE" | sudo tee /etc/apt/sources.list.d/postgresql.list
+set +e
 sudo apt-get update
-sudo apt-get install -y postgresql-client-13 libpq-dev
+UPDATE_EXIT=$?
+set -e
+
+if [ $UPDATE_EXIT -ne 0 ]; then
+  echo "WARNING: External PostgreSQL APT repo failed to update (maybe unavailable for ${CODENAME}-pgdg). Falling back to the distro packaged client."
+  sudo rm -f /etc/apt/sources.list.d/postgresql.list
+  sudo apt-get update
+  sudo apt-get install -y postgresql-client libpq-dev
+else
+  sudo apt-get install -y postgresql-client-13 libpq-dev
+fi
 
 # sanity check
 if ! command -v psql >/dev/null; then
@@ -39,15 +54,13 @@ echo "psql version: $(psql --version)"
 # Docker CLI (for using docker / docker compose)
 ####################################
 echo "=== Installing Docker CLI (will use host daemon if socket is mounted) ==="
-# Install docker CLI package; if already present this is a no-op
 sudo apt-get install -y docker.io
 
-# Ensure 'docker compose' is available (v2). If not, attempt to enable plugin.
 if ! docker compose version >/dev/null 2>&1; then
   echo "docker compose not found; attempting to install Compose v2 plugin"
   DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
   mkdir -p "$DOCKER_CONFIG/cli-plugins"
-  COMPOSE_VERSION="v2.22.0"  # adjust if you want a newer pinned version
+  COMPOSE_VERSION="v2.22.0"
   curl -SL "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-linux-x86_64" -o /tmp/docker-compose
   chmod +x /tmp/docker-compose
   mv /tmp/docker-compose "$DOCKER_CONFIG/cli-plugins/docker-compose"
