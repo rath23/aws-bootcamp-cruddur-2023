@@ -15,12 +15,16 @@
   "features": {
     "docker-in-docker": "latest"
   },
+    "runArgs": ["--privileged"],
   "containerEnv": {
     "AWS_CLI_AUTO_PROMPT": "on-partial",
     "LANG": "en_US.UTF-8",
     "LC_ALL": "en_US.UTF-8"
   },
-  "postCreateCommand": "echo 'export AWS_CLI_AUTO_PROMPT=on-partial' >> ~/.bashrc && echo 'export LANG=en_US.UTF-8' >> ~/.bashrc && echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc && (source /workspaces/${localWorkspaceFolderBasename}/backend-flask/bin/rds-sg-rules-update || true) && npm install -g @aws-amplify/cli || true",
-  "remoteUser": "root",
+    "postCreateCommand": "echo 'export AWS_CLI_AUTO_PROMPT=on-partial' >> ~/.bashrc && echo 'export LANG=en_US.UTF-8' >> ~/.bashrc && echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc && (source /workspaces/${localWorkspaceFolderBasename}/backend-flask/bin/rds-sg-rules-update || true) && npm install -g @aws-amplify/cli || true",
+   "remoteUser": "root",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
 }
+
+
+
