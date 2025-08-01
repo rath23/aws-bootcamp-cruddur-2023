@@ -3,7 +3,6 @@ from flask_cors import CORS, cross_origin
 import os
 
 from lib.auth import requires_auth ,try_get_current_user
-# from lib.auth import CognitoJWTValidator
 
 from services.home_activities import *
 from services.notifications_activities import *
@@ -14,7 +13,7 @@ from services.search_activities import *
 from services.message_groups import *
 from services.messages import *
 from services.create_message import *
-# from services.show_activity import *
+from services.show_activity import *
 from services.show_activity import *
 
 #HoneyComb import 
@@ -138,10 +137,6 @@ def after_request(response):
 
     origin = request.headers.get('Origin')
     LOGGER.info(f'CORS Request Origin: {origin}')
-    # response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-    # response.headers.add('Access-Control-Allow-Headers', 'Authorization,Content-Type')
-    # response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    # response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
   
 @app.route("/api/message_groups", methods=['GET'])
