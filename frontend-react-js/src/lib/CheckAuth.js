@@ -2,26 +2,35 @@ import { getCurrentUser, fetchUserAttributes } from '@aws-amplify/auth';
 
 export async function checkAuth(setUser) {
   try {
-    // const cognitoUserOutput = await getCurrentUser();
-    // const cognitoUser = cognitoUserOutput?.user ?? cognitoUserOutput;
-    // if (!cognitoUser) {
-    //   setUser(null);
-    //   return;
-    // }
-
+    // First verify there's an active session
+    await getCurrentUser(); // This throws if not authenticated
+    
+    // Then get user attributes
     const attributes = await fetchUserAttributes();
-    const preferred_username = attributes.preferred_username ?? attributes["custom:preferred_username"] ?? "";
-    const name = attributes.name ?? attributes["custom:name"] ?? "";
+    
+    const userData = {
+      display_name: attributes.name || attributes["custom:name"] || "",
+      handle: attributes.preferred_username || attributes["custom:preferred_username"] || "",
+      cognito_id: attributes.sub // Add the cognito user ID
+    };
 
-    localStorage.setItem("handle", preferred_username);
-    localStorage.setItem("display_name", name);
+    // Store in localStorage
+    localStorage.setItem("handle", userData.handle);
+    localStorage.setItem("display_name", userData.display_name);
+    localStorage.setItem("cognito_id", userData.cognito_id);
 
-    setUser({
-      display_name: name,
-      handle: preferred_username,
-    });
+    if (setUser) setUser(userData);
+    return userData;
+    
   } catch (error) {
-    console.log("Not signed in or auth failed:", error);
-    setUser(null);
+    console.error("Auth check failed:", error);
+    // Clear any existing auth data
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("handle");
+    localStorage.removeItem("display_name");
+    localStorage.removeItem("cognito_id");
+    
+    if (setUser) setUser(null);
+    return null;
   }
 }

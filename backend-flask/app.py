@@ -139,18 +139,52 @@ def after_request(response):
     LOGGER.info(f'CORS Request Origin: {origin}')
     return response
   
+# @app.route("/api/message_groups", methods=['GET'])
+# @requires_auth
+# def data_message_groups():
+#     user_payload = getattr(request, "user", None)  # set by decorator
+#     if not user_payload:
+#         return jsonify({"message": "Unauthorized"}), 401
+#     cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
+#     handle = user_payload.get("custom:handle")
+#     model = MessageGroups.run(cognito_user_id=cognito_sub)
+#     if model.get('errors'):
+#         return model['errors'], 422
+#     return model['data'], 200
+
 @app.route("/api/message_groups", methods=['GET'])
 @requires_auth
 def data_message_groups():
-    user_payload = getattr(request, "user", None)  # set by decorator
-    if not user_payload:
-        return jsonify({"message": "Unauthorized"}), 401
-    cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
-    handle = user_payload.get("custom:handle")
-    model = MessageGroups.run(cognito_user_id=cognito_sub)
-    if model.get('errors'):
-        return model['errors'], 422
-    return model['data'], 200
+    try:
+        user_payload = getattr(request, "user", None)
+        if not user_payload:
+            return jsonify({
+                "error": "missing_user",
+                "message": "User information not found in token"
+            }), 422
+
+        cognito_sub = user_payload.get("sub")
+        if not cognito_sub:
+            return jsonify({
+                "error": "invalid_token",
+                "message": "Token missing required claims (sub)"
+            }), 422
+
+        model = MessageGroups.run(cognito_user_id=cognito_sub)
+        
+        if model.get('errors'):
+            return jsonify({
+                "error": "validation_error",
+                "details": model['errors']
+            }), 422
+            
+        return jsonify(model['data']), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": "server_error",
+            "message": str(e)
+        }), 500
 
 
 @app.route("/api/messages/<string:message_group_uuid>", methods=['GET'])
