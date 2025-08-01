@@ -1,6 +1,6 @@
 {
   "name": "AWS Bootcamp Environment",
-  "image": "mcr.microsoft.com/devcontainers/universal:2", // Keep this image
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {},
     "ghcr.io/devcontainers/features/python:1": {
@@ -19,5 +19,8 @@
         "ms-azuretools.vscode-docker"
       ]
     }
-  }
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ]
 }
