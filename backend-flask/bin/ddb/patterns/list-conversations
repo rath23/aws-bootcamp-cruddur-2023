@@ -33,7 +33,7 @@ def get_my_user_uuid():
     WHERE users.handle = %(handle)s
   """
   uuid = db.query_value(sql, {
-    'handle': 'muneer009'  # Change to the current user's handle
+    'handle': 'muqeet'  # Change to the current user's handle
   })
   return uuid
 

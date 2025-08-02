@@ -3,13 +3,15 @@ from datetime import datetime, timedelta, timezone
 from lib.ddb import Ddb
 from lib.db import db
 
+from flask import current_app
+
 class MessageGroups:
      def run(cognito_user_id):
         model = {
             'errors': None,
             'data': None
         }
-
+        current_app.logger.info("Entering MessageGroups.run")
         try:
             # Get user UUID
             sql = db.template('users', 'uuid_from_cognito_user_id')
@@ -22,11 +24,13 @@ class MessageGroups:
                 return model
 
             print(f"UUID: {my_user_uuid}")
+            current_app.logger.info(my_user_uuid)
 
             # Get message groups
             ddb = Ddb.client()
             data = Ddb.list_message_groups(ddb, my_user_uuid)
             print("list_message_groups:", data)
+            current_app.logger.info(data)
 
             model['data'] = data
             return model

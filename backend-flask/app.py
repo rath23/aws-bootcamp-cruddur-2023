@@ -165,15 +165,6 @@ def after_request(response):
 def data_message_groups():
     try:
         user_payload = getattr(request, "user", None)
-        app.logger.info(
-            "Authenticated user",
-            extra={
-                "user_id": user_payload.get("sub"),
-                "handle": user_payload.get("custom:handle"),
-            },
-        )
-        app.logger.info(user_payload)
-
         if not user_payload:
             return (
                 jsonify(
@@ -196,9 +187,7 @@ def data_message_groups():
                 ),
                 422,
             )
-        app.logger.info(cognito_sub)
         model = MessageGroups.run(cognito_user_id=cognito_sub)
-
         if model.get("errors"):
             return (
                 jsonify({"error": "validation_error", "details": model["errors"]}),
