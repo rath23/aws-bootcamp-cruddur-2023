@@ -204,6 +204,8 @@ def data_message_groups():
 @requires_auth
 def data_messages(message_group_uuid):
     user_payload = getattr(request, "user", None)  # set by decorator
+    app.logger.info("message_group_uuid")
+    app.logger.info(message_group_uuid)
     if not user_payload:
         return jsonify({"message": "Unauthorized"}), 401
     cognito_sub = user_payload.get("sub")  # the user's UUID in Cognito
