@@ -4,60 +4,47 @@ import boto3
 import sys
 import json
 import os
-from datetime import datetime
+from datetime import datetime  # <---- missing import
 
-# Import the db helper
 current_path = os.path.dirname(os.path.abspath(__file__))
 parent_path = os.path.abspath(os.path.join(current_path, '..', '..', '..'))
 sys.path.append(parent_path)
 from lib.db import db
 
-# Local DynamoDB by default
-attrs = {
-  'endpoint_url': 'http://localhost:8000'
-}
-
-# Use AWS DynamoDB if 'prod' is passed
+# DynamoDB client: local by default unless "prod" is passed
+attrs = {'endpoint_url': 'http://localhost:8000'}
 if len(sys.argv) == 2 and "prod" in sys.argv[1]:
-  attrs = {}
+    attrs = {}
 
-# Create DynamoDB client
 dynamodb = boto3.client('dynamodb', **attrs)
 table_name = 'cruddur-messages'
 
-# Helper function to get UUID from PostgreSQL
 def get_my_user_uuid():
-  sql = """
-    SELECT users.uuid
+    sql = """
+    SELECT 
+      users.uuid
     FROM users
-    WHERE users.handle = %(handle)s
-  """
-  uuid = db.query_value(sql, {
-    'handle': 'muqeet'  # Change to the current user's handle
-  })
-  return uuid
+    WHERE
+      users.handle = %(handle)s
+    """
+    uuid = db.query_value(sql, {'handle': 'muqeet'})
+    return uuid
 
-# Get current user's UUID
 my_user_uuid = get_my_user_uuid()
 print(f"my-uuid: {my_user_uuid}")
 
-# Get current year for message filtering
 year = str(datetime.now().year)
 
-# Build the DynamoDB query parameters
 query_params = {
-  'TableName': table_name,
-  'KeyConditionExpression': 'pk = :pk AND begins_with(sk, :year)',
-  'ScanIndexForward': False,
-  'ExpressionAttributeValues': {
-    ':pk':   {'S': f"GRP#{my_user_uuid}"},
-    ':year': {'S': year}
-  },
-  'ReturnConsumedCapacity': 'TOTAL'
+    'TableName': table_name,
+    'KeyConditionExpression': 'pk = :pk AND begins_with(sk, :year)',
+    'ScanIndexForward': False,
+    'ExpressionAttributeValues': {
+        ':year': {'S': year},
+        ':pk': {'S': f"GRP#{my_user_uuid}"}
+    },
+    'ReturnConsumedCapacity': 'TOTAL'
 }
 
-# Query the table
 response = dynamodb.query(**query_params)
-
-# Print the query result
 print(json.dumps(response, sort_keys=True, indent=2))

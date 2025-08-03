@@ -4,6 +4,7 @@ import os
 
 from lib.auth import requires_auth, try_get_current_user
 
+from services.users_short import *
 from services.home_activities import *
 from services.notifications_activities import *
 from services.user_activities import *
@@ -219,44 +220,52 @@ def data_messages(message_group_uuid):
         return model["data"], 200
 
 
-@app.route("/api/messages", methods=['POST','OPTIONS'])
+
+
+@app.route("/api/messages", methods=['POST', 'OPTIONS'])
 @cross_origin()
 @requires_auth
 def data_create_message():
- 
-  message_group_uuid   = request.json.get('message_group_uuid',None)
-  user_receiver_handle = request.json.get('handle',None)
-  message = request.json['message']
-  try:
+    message_group_uuid   = request.json.get('message_group_uuid',None)
+    user_receiver_handle = request.json.get('handle',None)
+    message = request.json['message']
+
+    if not message:
+        return jsonify({"errors": ["message_required"]}), 400
+
     user_payload = getattr(request, "user", None)
-    # authenicatied request
-    app.logger.debug("authenicated")
-    app.logger.debug(user_payload)
+    if not user_payload:
+        return jsonify({"errors": ["unauthenticated"]}), 401
+
+    app.logger.debug("authenticated user payload: %s", user_payload)
     cognito_user_id = user_payload.get("sub")
-    if message_group_uuid == None:
-      # Create for the first time
-      model = CreateMessage.run(
-        mode="create",
-        message=message,
-        cognito_user_id=cognito_user_id,
-        user_receiver_handle=user_receiver_handle
-      )
-    else:
-      # Push onto existing Message Group
-      model = CreateMessage.run(
-        mode="update",
-        message=message,
-        message_group_uuid=message_group_uuid,
-        cognito_user_id=cognito_user_id
-      )
-    if model['errors'] is not None:
-      return model['errors'], 422
-    else:
-      return model['data'], 200
-  except TokenVerifyError as e:
-    # unauthenicatied request
-    app.logger.debug(e)
-    return {}, 401
+
+    try:
+        if message_group_uuid is None:
+            if not user_receiver_handle:
+                return jsonify({"errors": ["receiver_handle_required"]}), 400
+            model = CreateMessage.run(
+                mode="create",
+                message=message,
+                cognito_user_id=cognito_user_id,
+                user_receiver_handle=user_receiver_handle
+            )
+        else:
+            model = CreateMessage.run(
+                mode="update",
+                message=message,
+                message_group_uuid=message_group_uuid,
+                cognito_user_id=cognito_user_id
+            )
+
+        if model.get("errors"):
+            return jsonify({"errors": model["errors"]}), 422
+        return jsonify(model["data"]), 200
+
+    except Exception:  # later narrow to specific error types if needed
+        app.logger.exception("Error in creating message")
+        return jsonify({"errors": ["server_error"]}), 500
+
 
 
 
@@ -331,6 +340,11 @@ def data_activities_reply(activity_uuid):
     else:
         return model["data"], 200
     return
+
+@app.route("/api/users/@<string:handle>/short", methods=['GET'])
+def data_users_short(handle):
+  data = UsersShort.run(handle)
+  return data, 200
 
 
 if __name__ == "__main__":

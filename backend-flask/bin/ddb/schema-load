@@ -3,56 +3,67 @@
 import boto3
 import sys
 
-# Use local endpoint unless "prod" is passed as argument
 attrs = {
-    'endpoint_url': 'http://localhost:8000'
+  'endpoint_url': 'http://localhost:8000'
 }
 
-if len(sys.argv) == 2 and "prod" in sys.argv[1]:
+if len(sys.argv) == 2:
+  if "prod" in sys.argv[1]:
     attrs = {}
 
-ddb = boto3.client('dynamodb', **attrs)
+ddb = boto3.client('dynamodb',**attrs)
 
 table_name = 'cruddur-messages'
 
-try:
-    response = ddb.create_table(
-        TableName=table_name,
-        AttributeDefinitions=[
-            {'AttributeName': 'pk', 'AttributeType': 'S'},
-            {'AttributeName': 'sk', 'AttributeType': 'S'},
-            {'AttributeName': 'GSI1PK', 'AttributeType': 'S'},
-            {'AttributeName': 'GSI1SK', 'AttributeType': 'S'}
-        ],
-        KeySchema=[
-            {'AttributeName': 'pk', 'KeyType': 'HASH'},
-            {'AttributeName': 'sk', 'KeyType': 'RANGE'}
-        ],
-        GlobalSecondaryIndexes=[
-            {
-                'IndexName': 'GSI1',
-                'KeySchema': [
-                    {'AttributeName': 'GSI1PK', 'KeyType': 'HASH'},
-                    {'AttributeName': 'GSI1SK', 'KeyType': 'RANGE'}
-                ],
-                'Projection': {
-                    'ProjectionType': 'ALL'
-                },
-                'ProvisionedThroughput': {
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5
-                }
-            }
-        ],
-        BillingMode='PROVISIONED',
-        ProvisionedThroughput={
-            'ReadCapacityUnits': 5,
-            'WriteCapacityUnits': 5
-        }
-    )
 
-    print(f"✅ Table '{table_name}' created successfully.")
-    print(response)
+response = ddb.create_table(
+  TableName=table_name,
+  AttributeDefinitions=[
+    {
+      'AttributeName': 'message_group_uuid',
+      'AttributeType': 'S'
+    },
+    {
+      'AttributeName': 'pk',
+      'AttributeType': 'S'
+    },
+    {
+      'AttributeName': 'sk',
+      'AttributeType': 'S'
+    },
+  ],
+  KeySchema=[
+    {
+      'AttributeName': 'pk',
+      'KeyType': 'HASH'
+    },
+    {
+      'AttributeName': 'sk',
+      'KeyType': 'RANGE'
+    },
+  ],
+  GlobalSecondaryIndexes= [{
+    'IndexName':'message-group-sk-index',
+    'KeySchema':[{
+      'AttributeName': 'message_group_uuid',
+      'KeyType': 'HASH'
+    },{
+      'AttributeName': 'sk',
+      'KeyType': 'RANGE'
+    }],
+    'Projection': {
+      'ProjectionType': 'ALL'
+    },
+    'ProvisionedThroughput': {
+      'ReadCapacityUnits': 5,
+      'WriteCapacityUnits': 5
+    },
+  }],
+  BillingMode='PROVISIONED',
+  ProvisionedThroughput={
+      'ReadCapacityUnits': 5,
+      'WriteCapacityUnits': 5
+  }
+)
 
-except ddb.exceptions.ResourceInUseException:
-    print(f"⚠️ Table '{table_name}' already exists.")
+print(response)

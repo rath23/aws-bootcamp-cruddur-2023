@@ -5,58 +5,53 @@ import sys
 import json
 import datetime
 
-# Setup DynamoDB client attributes
 attrs = {
-    'endpoint_url': 'http://localhost:8000'  # Default to local DynamoDB
+  'endpoint_url': 'http://localhost:8000'
 }
 
-if len(sys.argv) == 2 and "prod" in sys.argv[1]:
-    attrs = {}  # Use real AWS DynamoDB
+if len(sys.argv) == 2:
+  if "prod" in sys.argv[1]:
+    attrs = {}
 
-# Create DynamoDB client
-dynamodb = boto3.client('dynamodb', **attrs)
+dynamodb = boto3.client('dynamodb',**attrs)
 table_name = 'cruddur-messages'
 
-# Replace this with your actual group UUID or get from input
-# message_group_uuid = "3c3dfd54-af5b-4cad-b8d4-9fc3686661b1"
-message_group_uuid = "d194c354-dc81-497a-a544-02b4a72eddf5"
+message_group_uuid = "5ae290ed-55d1-47a0-bc6d-fe2bc2700399"
 
-# Filter messages for the current year
 year = str(datetime.datetime.now().year)
-
-# Build the query parameters
+# define the query parameters
 query_params = {
-    'TableName': table_name,
-    'ScanIndexForward': False,  # Newest first
-    'Limit': 20,
-    'ReturnConsumedCapacity': 'TOTAL',
-    'KeyConditionExpression': 'pk = :pk AND begins_with(sk, :year)',
-    'ExpressionAttributeValues': {
-        ':pk':   {'S': f"MSG#{message_group_uuid}"},
-        ':year': {'S': year}
-    }
+  'TableName': table_name,
+  'ScanIndexForward': False,
+  'Limit': 20,
+  'ReturnConsumedCapacity': 'TOTAL',
+  'KeyConditionExpression': 'pk = :pk AND begins_with(sk,:year)',
+  #'KeyConditionExpression': 'pk = :pk AND sk BETWEEN :start_date AND :end_date',
+  'ExpressionAttributeValues': {
+    ':year': {'S': year },
+    #":start_date": { "S": "2023-03-01T00:00:00.000000+00:00" },
+    #":end_date": { "S": "2023-03-19T23:59:59.999999+00:00" },
+    ':pk': {'S': f"MSG#{message_group_uuid}"}
+  }
 }
 
-# Execute the query
+
+# query the table
 response = dynamodb.query(**query_params)
 
-# Print raw response
-print("\n🔹 Query Response:")
-print(json.dumps(response, indent=2, sort_keys=True))
+# print the items returned by the query
+print(json.dumps(response, sort_keys=True, indent=2))
 
-# Print consumed capacity
-print("\n🔹 Consumed Capacity:")
-print(json.dumps(response['ConsumedCapacity'], indent=2, sort_keys=True))
+# print the consumed capacity
+print(json.dumps(response['ConsumedCapacity'], sort_keys=True, indent=2))
 
-# Display messages in readable format
-print("\n📨 Messages:")
 items = response['Items']
-items.reverse()  # To show oldest to newest
+items.reverse()
 
-for item in items:
-    sender_handle = item['user_handle']['S']
-    message = item['message']['S']
-    timestamp = item['sk']['S']
-    dt_object = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z')
-    formatted_datetime = dt_object.strftime('%Y-%m-%d %I:%M %p')
-    print(f'{sender_handle:<15} {formatted_datetime:<22} {message[:60]}...')
+for item in reversed_array:
+  sender_handle = item['user_handle']['S']
+  message       = item['message']['S']
+  timestamp     = item['sk']['S']
+  dt_object = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z')
+  formatted_datetime = dt_object.strftime('%Y-%m-%d %I:%M %p')
+  print(f'{sender_handle: <12}{formatted_datetime: <22}{message[:40]}...')
