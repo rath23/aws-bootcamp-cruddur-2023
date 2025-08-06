@@ -63,6 +63,10 @@ from flask import got_request_exception
 
 app = Flask(__name__)
 
+@app.route('/api/health-check')
+def health_check():
+  return {'success': True}, 200
+
 
 rollbar_access_token = os.getenv("ROLLBAR_ACCESS_TOKEN")
 
