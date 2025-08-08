@@ -23,6 +23,8 @@ python-jose
 psycopg[binary]
 psycopg[pool]
 
+gunicorn==21.2.0
+
 boto3
 
 

@@ -7,6 +7,7 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityForm from '../components/ActivityForm';
 import ReplyForm from '../components/ReplyForm';
+import { getAuthToken } from '../lib/GetAuthToken';
 
 export default function HomeFeedPage() {
   const [activities, setActivities] = React.useState([]);
@@ -17,7 +18,8 @@ export default function HomeFeedPage() {
   const dataFetchedRef = React.useRef(false);
 
   const loadData = async () => {
-    const token = localStorage.getItem("access_token");
+    // const token = localStorage.getItem("access_token");
+    const token = await getAuthToken();
     try {
       const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
 

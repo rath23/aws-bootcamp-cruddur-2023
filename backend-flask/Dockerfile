@@ -17,11 +17,7 @@
 FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-buster AS builder
 
 WORKDIR /app
-
-# Copy only requirements to install dependencies
 COPY requirements.txt .
-
-# Install to a custom folder to prevent installing cache into final image
 RUN pip install --user -r requirements.txt
 
 # ───────────────────────────────────────────────────────────
@@ -30,16 +26,13 @@ FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-bust
 
 WORKDIR /app
 
-# Copy just the dependencies from builder
 COPY --from=builder /root/.local /root/.local
-
-# Add app source code
 COPY . .
 
-# Ensure the user-installed packages are found
 ENV PATH=/root/.local/bin:$PATH
+ENV FLASK_ENV=production
+ENV FLASK_DEBUG=0
+ENV PORT=4567
+EXPOSE 4567
 
-ENV FLASK_DEBUG=1
-EXPOSE ${PORT}
-
-CMD ["flask", "run", "--host=0.0.0.0", "--port=4567"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:4567", "app:app"]
