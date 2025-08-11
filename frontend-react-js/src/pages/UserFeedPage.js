@@ -1,63 +1,73 @@
 import './UserFeedPage.css';
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React from "react";
 import { useParams } from 'react-router-dom';
-import Cookies from 'js-cookie';
 
-import DesktopNavigation from '../components/DesktopNavigation';
-import DesktopSidebar from '../components/DesktopSidebar';
+import DesktopNavigation  from '../components/DesktopNavigation';
+import DesktopSidebar     from '../components/DesktopSidebar';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityForm from '../components/ActivityForm';
+import ProfileHeading from '../components/ProfileHeading';
+import ProfileForm from '../components/ProfileForm';
+
+import { getAuthToken } from '../lib/GetAuthToken';
+import { checkAuth } from '../lib/CheckAuth';
 
 export default function UserFeedPage() {
-  const [activities, setActivities] = useState([]);
-  const [popped, setPopped] = useState([]); // Kept in case ActivityForm uses it
-  const [user, setUser] = useState(null);
-  const dataFetchedRef = useRef(false);
+  const [activities, setActivities] = React.useState([]);
+  const [profile, setProfile] = React.useState([]);
+  const [popped, setPopped] = React.useState([]);
+  const [poppedProfile, setPoppedProfile] = React.useState([]);
+  const [user, setUser] = React.useState(null);
+  const dataFetchedRef = React.useRef(false);
 
   const params = useParams();
 
-  const title = useMemo(() => `@${params.handle}`, [params.handle]);
-
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     try {
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/${title}`;
+      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/@${params.handle}`
+       const token = await getAuthToken();
       const res = await fetch(backend_url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
         method: "GET"
       });
-      const resJson = await res.json();
+      let resJson = await res.json();
       if (res.status === 200) {
-        setActivities(resJson);
+        console.log('setprofile',resJson.profile)
+        setProfile(resJson.profile)
+        setActivities(resJson.activities)
       } else {
-        console.warn('Failed to load activities:', res);
+        console.log(res)
       }
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.log(err);
     }
-  }, [title]);
+  };
 
-  const checkAuth = useCallback(() => {
-    if (Cookies.get('user.logged_in')) {
-      setUser({
-        display_name: Cookies.get('user.name'),
-        handle: Cookies.get('user.username')
-      });
-    }
-  }, []);
-
-  useEffect(() => {
+  React.useEffect(()=>{
+    //prevents double call
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
 
     loadData();
-    checkAuth();
-  }, [loadData, checkAuth]);
+    checkAuth(setUser);
+  }, [])
 
   return (
     <article>
       <DesktopNavigation user={user} active={'profile'} setPopped={setPopped} />
       <div className='content'>
         <ActivityForm popped={popped} setActivities={setActivities} />
-        <ActivityFeed title={title} activities={activities} />
+        <ProfileForm 
+          profile={profile}
+          popped={poppedProfile} 
+          setPopped={setPoppedProfile} 
+        />
+        <div className='activity_feed'>
+          <ProfileHeading setPopped={setPoppedProfile} profile={profile} />
+          <ActivityFeed activities={activities} />
+        </div>
       </div>
       <DesktopSidebar user={user} />
     </article>
