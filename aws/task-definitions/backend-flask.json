@@ -71,11 +71,11 @@
         },
         {
           "name": "FRONTEND_URL",
-          "value": "http://cruddur-alb-1924341811.ap-south-1.elb.amazonaws.com:3000"
+          "value": "https://mycruddur.site"
         },
         {
           "name": "BACKEND_URL",
-          "value": "http://cruddur-alb-1924341811.ap-south-1.elb.amazonaws.com:4567"
+          "value": "https://api.mycruddur.site"
         },
         {
           "name": "AWS_DEFAULT_REGION",
