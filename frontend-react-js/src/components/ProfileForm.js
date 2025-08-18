@@ -113,24 +113,20 @@ export default function ProfileForm(props) {
       props.setPopped(false)
     }
   }
-
-  if (props.popped === true) {
+if (props.popped === true) {
     return (
       <div className="popup_form_wrap profile_popup" onClick={close}>
         <form 
           className='profile_form popup_form'
           onSubmit={onsubmit}
         >
-          <div className="popup_heading">
-            <div className="popup_title">Edit Profile</div>
+          <div class="popup_heading">
+            <div class="popup_title">Edit Profile</div>
             <div className='submit'>
               <button type='submit'>Save</button>
             </div>
           </div>
           <div className="popup_content">
-            
-          <input type="file" name="avatarupload" onChange={s3upload} />
-
             <div className="field display_name">
               <label>Display Name</label>
               <input
