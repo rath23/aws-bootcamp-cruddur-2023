@@ -1,7 +1,7 @@
 import './ProfileForm.css';
 import React from "react";
 import process from 'process';
-import {getAuthToken} from '../lib/GetAuthToken';
+import {getAccessToken} from 'lib/GetAuthToken';
 
 export default function ProfileForm(props) {
   const [bio, setBio] = React.useState('');
@@ -16,7 +16,8 @@ export default function ProfileForm(props) {
     console.log('ext',extension)
     try {
       const gateway_url = `${process.env.REACT_APP_API_GATEWAY_ENDPOINT_URL}/avatars/key_upload`
- const access_token = await getAuthToken();
+      await getAccessToken()
+      const access_token = localStorage.getItem("access_token")
       const json = {
         extension: extension
       }
@@ -73,8 +74,7 @@ export default function ProfileForm(props) {
     event.preventDefault();
     try {
       const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/profile/update`
- const access_token = await getAuthToken();
-
+      const access_token = await getAccessToken();
       const res = await fetch(backend_url, {
         method: "POST",
         headers: {
@@ -113,20 +113,24 @@ export default function ProfileForm(props) {
       props.setPopped(false)
     }
   }
-if (props.popped === true) {
+
+  if (props.popped === true) {
     return (
       <div className="popup_form_wrap profile_popup" onClick={close}>
         <form 
           className='profile_form popup_form'
           onSubmit={onsubmit}
         >
-          <div class="popup_heading">
-            <div class="popup_title">Edit Profile</div>
+          <div className="popup_heading">
+            <div className="popup_title">Edit Profile</div>
             <div className='submit'>
               <button type='submit'>Save</button>
             </div>
           </div>
           <div className="popup_content">
+            
+          <input type="file" name="avatarupload" onChange={s3upload} />
+
             <div className="field display_name">
               <label>Display Name</label>
               <input
