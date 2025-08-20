@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+# Install jwt into Ruby 3.4 runtime gem path
+gem install jwt -i /tmp/lambda-layers/ruby-jwt/ruby/gems/3.4.0
+
+# Move into layer dir
+cd /tmp/lambda-layers/ruby-jwt
+
+# Zip everything
+zip -r lambda-layers.zip . -x ".*" -x "*/.*"
+zipinfo -t lambda-layers.zip
+
+# Publish the layer
+aws lambda publish-layer-version \
+  --layer-name jwt \
+  --description "Lambda Layer for JWT (Ruby 3.4)" \
+  --license-info "MIT" \
+  --zip-file fileb://lambda-layers.zip \
+  --compatible-runtimes ruby3.4

@@ -1,7 +1,7 @@
 import './ProfileForm.css';
 import React from "react";
 import process from 'process';
-import {getAccessToken} from 'lib/GetAuthToken';
+import {getAuthToken} from 'lib/GetAuthToken';
 
 export default function ProfileForm(props) {
   const [bio, setBio] = React.useState('');
@@ -15,9 +15,9 @@ export default function ProfileForm(props) {
   const s3uploadkey = async (extension)=> {
     console.log('ext',extension)
     try {
-      const gateway_url = `${process.env.REACT_APP_API_GATEWAY_ENDPOINT_URL}/avatars/key_upload`
-      await getAccessToken()
-      const access_token = localStorage.getItem("access_token")
+      // const gateway_url = `${process.env.REACT_APP_API_GATEWAY_ENDPOINT_URL}/avatars/key_upload`
+      console.log("gateway url", `${process.env.REACT_APP_API_GATEWAY_ENDPOINT_URL}/avatars/key_upload`)
+      const access_token = await getAuthToken();
       const json = {
         extension: extension
       }
@@ -25,14 +25,19 @@ export default function ProfileForm(props) {
         method: "POST",
         body: JSON.stringify(json),
         headers: {
-          'Origin': process.env.REACT_APP_FRONTEND_URL,
+          // 'Origin': process.env.REACT_APP_FRONTEND_URL,
+          'Origin':`https://3000-rath23-awsbootcampcrudd-nc2r4bkhop8.ws-us121.gitpod.io`,
           'Authorization': `Bearer ${access_token}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
       })
+      console.log("before data")
       let data = await res.json();
+      console.log("after data")
+      console.log(res)
       if (res.status === 200) {
+         console.log('presigned url',data)
         return data.url
       } else {
         console.log(res)
@@ -52,6 +57,7 @@ export default function ProfileForm(props) {
     const fileparts = filename.split('.')
     const extension = fileparts[fileparts.length-1]
     const presignedurl = await s3uploadkey(extension)
+    console.log("presignedurl",presignedurl)
     try {
       console.log('s3upload')
       const res = await fetch(presignedurl, {
@@ -74,7 +80,7 @@ export default function ProfileForm(props) {
     event.preventDefault();
     try {
       const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/profile/update`
-      const access_token = await getAccessToken();
+      const access_token = await getAuthToken();
       const res = await fetch(backend_url, {
         method: "POST",
         headers: {
