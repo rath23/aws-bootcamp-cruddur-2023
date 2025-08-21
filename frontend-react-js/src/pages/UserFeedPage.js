@@ -37,6 +37,7 @@ export default function UserFeedPage() {
         console.log('setprofile',resJson.profile)
         setProfile(resJson.profile)
         setActivities(resJson.activities)
+        
       } else {
         console.log(res)
       }

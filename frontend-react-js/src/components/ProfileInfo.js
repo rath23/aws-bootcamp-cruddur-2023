@@ -1,6 +1,7 @@
 import './ProfileInfo.css';
 import { ReactComponent as ElipsesIcon } from './svg/elipses.svg';
 import React from "react";
+import ProfileAvatar from './ProfileAvatar';
 
 // ✅ Modular import for Amplify v6
 import { signOut } from '@aws-amplify/auth';
@@ -37,7 +38,7 @@ export default function ProfileInfo(props) {
         <button onClick={handleSignOut}>Sign Out</button>
       </div>
       <div className="profile-info" onClick={click_pop}>
-        <div className="profile-avatar"></div>
+        <ProfileAvatar id={props.user.cognito_id} />
         <div className="profile-desc">
           <div className="profile-display-name">{props.user.display_name || "My Name"}</div>
           <div className="profile-username">@{props.user.handle || "handle"}</div>
