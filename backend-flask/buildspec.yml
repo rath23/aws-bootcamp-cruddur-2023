@@ -1,27 +1,33 @@
+# Buildspec runs in the build stage of your pipeline.
 version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws --version
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 651746472793.dkr.ecr.ap-south-1.amazonaws.com
-      - REPOSITORY_URI=651746472793.dkr.ecr.ap-south-1.amazonaws.com/backend-flask
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo "cd into $CODEBUILD_SRC_DIR/backend"
+      - cd $CODEBUILD_SRC_DIR/backend-flask
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_URL
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...          
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - docker build -t backend-flask .
+      - "docker tag $REPO_NAME $IMAGE_URL/$REPO_NAME"
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Writing image definitions file...
-      - printf '[{"name":"backend-flask","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Pushing the Docker image..
+      - docker push $IMAGE_URL/$REPO_NAME
+      - cd $CODEBUILD_SRC_DIR
+      - echo "imagedefinitions.json > [{\"name\":\"$CONTAINER_NAME\",\"imageUri\":\"$IMAGE_URL/$REPO_NAME\"}]" > imagedefinitions.json
+      - printf "[{\"name\":\"$CONTAINER_NAME\",\"imageUri\":\"$IMAGE_URL/$REPO_NAME\"}]" > imagedefinitions.json
+
+env:
+  variables:
+    AWS_ACCOUNT_ID: 651746472793
+    AWS_DEFAULT_REGION: ap-south-1
+    CONTAINER_NAME: backend-flask
+    IMAGE_URL: 651746472793.dkr.ecr.ap-south-1.amazonaws.com
+    REPO_NAME: backend-flask:latest
 artifacts:
   files:
     - imagedefinitions.json
