@@ -12,7 +12,7 @@ def lambda_handler(event, context):
   print('event-data',event)
 
   eventName = event['Records'][0]['eventName']
-  if (eventName == 'REMOVE'):
+  if (eventName === 'REMOVE'):
     print("skip REMOVE event")
     return
   pk = event['Records'][0]['dynamodb']['Keys']['pk']['S']

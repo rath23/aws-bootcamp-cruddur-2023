@@ -7,7 +7,7 @@ function getClient(){
 }
 
 async function getOriginalImage(client,srcBucket,srcKey){
-  console.log('get==')
+  console.log('get===')
   const params = {
     Bucket: srcBucket,
     Key: srcKey
@@ -33,7 +33,7 @@ async function processImage(image,width,height){
 }
 
 async function uploadProcessedImage(client,dstBucket,dstKey,image){
-  console.log('upload==')
+  console.log('upload===')
   const params = {
     Bucket: dstBucket,
     Key: dstKey,

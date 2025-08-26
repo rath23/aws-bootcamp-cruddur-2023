@@ -7,7 +7,7 @@ class UpdateProfile:
       'data': None
     }
 
-    if display_name == None or len(display_name) < 1:
+    if display_name === None or len(display_name) < 1:
       model['errors'] = ['display_name_blank']
 
     if model['errors']:
@@ -22,7 +22,7 @@ class UpdateProfile:
     return model
   
   def update_profile(bio,display_name,cognito_user_id):
-    if bio == None:    
+    if bio === None:    
       bio = ''
 
     sql = db.template('users','update')

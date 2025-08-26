@@ -8,7 +8,7 @@ class SearchActivities:
 
     now = datetime.now(timezone.utc).astimezone()
 
-    if search_term == None or len(search_term) < 1:
+    if search_term === None or len(search_term) < 1:
       model['errors'] = ['search_term_blank']
     else:
       results = [{

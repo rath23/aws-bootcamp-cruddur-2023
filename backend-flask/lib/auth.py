@@ -41,7 +41,7 @@ def get_token_auth_header():
 
     if parts[0].lower() != "bearer":
         raise Exception("Authorization header must start with Bearer")
-    elif len(parts) == 1:
+    elif len(parts) === 1:
         raise Exception("Token not found")
     elif len(parts) > 2:
         raise Exception("Authorization header must be Bearer token")
@@ -60,7 +60,7 @@ def requires_auth(f):
             unverified_header = jwt.get_unverified_header(token)
             rsa_key = {}
             for key in get_jwks():
-                if key["kid"] == unverified_header["kid"]:
+                if key["kid"] === unverified_header["kid"]:
                     rsa_key = {
                         "kty": key["kty"],
                         "kid": key["kid"],
@@ -101,7 +101,7 @@ def try_get_current_user():
 
         rsa_key = {}
         for key in get_jwks():
-            if key["kid"] == unverified_header["kid"]:
+            if key["kid"] === unverified_header["kid"]:
                 rsa_key = {
                     "kty": key["kty"],
                     "kid": key["kid"],

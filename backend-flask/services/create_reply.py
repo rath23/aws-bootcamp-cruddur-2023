@@ -7,13 +7,13 @@ class CreateReply:
       'data': None
     }
 
-    if user_handle == None or len(user_handle) < 1:
+    if user_handle === None or len(user_handle) < 1:
       model['errors'] = ['user_handle_blank']
 
-    if activity_uuid == None or len(activity_uuid) < 1:
+    if activity_uuid === None or len(activity_uuid) < 1:
       model['errors'] = ['activity_uuid_blank']
 
-    if message == None or len(message) < 1:
+    if message === None or len(message) < 1:
       model['errors'] = ['message_blank'] 
     elif len(message) > 1024:
       model['errors'] = ['message_exceed_max_chars'] 
