@@ -47,10 +47,10 @@ Parameters:
     Default: 1hpv5obh5k8br43jsp9lnl4fd8
   EnvFrontendUrl:
     Type: String
-    Default: https://mycruddur.site
+    Default: "*"
   EnvBackendUrl:
     Type: String
-    Default: https://api.mycruddur.site
+    Default: "*"
   SecretsAWSAccessKeyId:
     Type: String
     Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_ACCESS_KEY_ID'
@@ -245,8 +245,19 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+        
 Outputs:
   ServiceName:
     Value: !GetAtt FargateService.Name
     Export:
       Name: !Sub "${AWS::StackName}ServiceName"
+
+  TaskExecutionRoleArn:
+    Value: !GetAtt ExecutionRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}TaskExecutionRoleArn"
+
+  TaskRoleArn:
+    Value: !GetAtt TaskRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}TaskRoleArn"

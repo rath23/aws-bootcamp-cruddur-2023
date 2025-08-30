@@ -7,11 +7,9 @@ Description: |
 Parameters:
   LogGroupPath:
     Type: String
-    Description: "The log group path for CodeBuild"
     Default: "/cruddur/codebuild/bake-service"
   LogStreamName:
     Type: String
-    Description: "The log group path for CodeBuild"
     Default: "backend-flask"
   CodeBuildImage:
     Type: String
@@ -25,15 +23,13 @@ Parameters:
   BuildSpec:
     Type: String
     Default: 'buildspec.yaml'
+
 Resources:
   CodeBuild:
-    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-codebuild-project.html
     Type: AWS::CodeBuild::Project
     Properties:
       QueuedTimeoutInMinutes: !Ref CodeBuildTimeoutMins
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      # PrivilegedMode is needed to build Docker images
-      # even though we have No Artifacts, CodePipeline Demands both to be set as CODEPIPLINE
       Artifacts:
         Type: CODEPIPELINE
       Environment:
@@ -49,16 +45,16 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpec
+
   CodeBuildRole:
-    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Action: ['sts:AssumeRole']
-          Effect: Allow
-          Principal:
-            Service: [codebuild.amazonaws.com]
+          - Action: ['sts:AssumeRole']
+            Effect: Allow
+            Principal:
+              Service: [codebuild.amazonaws.com]
         Version: '2012-10-17'
       Path: /
       Policies:
@@ -66,47 +62,61 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Action:
-                - ecr:BatchCheckLayerAvailability
-                - ecr:CompleteLayerUpload
-                - ecr:GetAuthorizationToken
-                - ecr:InitiateLayerUpload
-                - ecr:BatchGetImage
-                - ecr:GetDownloadUrlForLayer
-                - ecr:PutImage
-                - ecr:UploadLayerPart
-                Effect: Allow
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetAuthorizationToken
+                  - ecr:InitiateLayerUpload
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
                 Resource: "*"
+
         - PolicyName: !Sub ${AWS::StackName}VPCPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Action:
-                - ec2:CreateNetworkInterface
-                - ec2:DescribeDhcpOptions
-                - ec2:DescribeNetworkInterfaces
-                - ec2:DeleteNetworkInterface
-                - ec2:DescribeSubnets
-                - ec2:DescribeSecurityGroups
-                - ec2:DescribeVpcs
-                Effect: Allow
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeDhcpOptions
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeVpcs
                 Resource: "*"
-              - Action:
-                - ec2:CreateNetworkInterfacePermission
-                Effect: Allow
+              - Effect: Allow
+                Action: ec2:CreateNetworkInterfacePermission
                 Resource: "*"
-        - PolicyName: !Sub ${AWS::StackName}Logs
+
+        - PolicyName: !Sub ${AWS::StackName}LogsPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Action:
-                - logs:CreateLogGroup
-                - logs:CreateLogStream
-                - logs:PutLogEvents
-                Effect: Allow
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
                 Resource:
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupPath}*
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupPath}:*
+
+        - PolicyName: !Sub ${AWS::StackName}S3ArtifactsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-Zyk/Source/*
+                  - arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-Zyk/ImageDefin/*
+
 Outputs:
   CodeBuildProjectName:
     Description: "CodeBuild Project Name"
