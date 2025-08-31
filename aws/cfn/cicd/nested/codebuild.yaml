@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Codebuild used for baking container images
+  - Codebuild Project
+  - Codebuild Project Role
+
+Parameters:
+  LogGroupPath:
+    Type: String
+    Default: "/cruddur/codebuild/bake-service"
+  LogStreamName:
+    Type: String
+    Default: "backend-flask"
+  CodeBuildImage:
+    Type: String
+    Default: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+  CodeBuildComputeType:
+    Type: String
+    Default: BUILD_GENERAL1_SMALL
+  CodeBuildTimeoutMins:
+    Type: Number
+    Default: 5
+  BuildSpec:
+    Type: String
+    Default: 'buildspec.yaml'
+
+Resources:
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      QueuedTimeoutInMinutes: !Ref CodeBuildTimeoutMins
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: !Ref CodeBuildComputeType
+        Image: !Ref CodeBuildImage
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+      LogsConfig:
+        CloudWatchLogs:
+          GroupName: !Ref LogGroupPath
+          Status: ENABLED
+          StreamName: !Ref LogStreamName
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref BuildSpec
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: ['sts:AssumeRole']
+            Effect: Allow
+            Principal:
+              Service: [codebuild.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}ECRPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetAuthorizationToken
+                  - ecr:InitiateLayerUpload
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: "*"
+
+        - PolicyName: !Sub ${AWS::StackName}VPCPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeDhcpOptions
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeVpcs
+                Resource: "*"
+              - Effect: Allow
+                Action: ec2:CreateNetworkInterfacePermission
+                Resource: "*"
+
+        - PolicyName: !Sub ${AWS::StackName}LogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupPath}*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupPath}:*
+
+        - PolicyName: !Sub ${AWS::StackName}S3ArtifactsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-Zyk/Source/*
+                  - arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-Zyk/ImageDefin/*
+
+Outputs:
+  CodeBuildProjectName:
+    Description: "CodeBuild Project Name"
+    Value: !Ref CodeBuild

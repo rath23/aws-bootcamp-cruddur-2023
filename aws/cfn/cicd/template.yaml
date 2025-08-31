@@ -1,0 +1,183 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  - CodeStar Connection V2 Github
+  - CodePipeline
+  - Codebuild
+Parameters:
+  GitHubBranch:
+    Type: String
+    Default: prod
+  GithubRepo:
+    Type: String
+    Default: 'rath23/aws-bootcamp-cruddur-2023'
+  ClusterStack:
+    Type: String
+  ServiceStack:
+    Type: String
+  ArtifactBucketName:
+    Type: String
+
+Resources:
+  CodeBuildBakeImageStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: nested/codebuild.yaml
+
+  CodeStarConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub ${AWS::StackName}-connection
+      ProviderType: GitHub
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref ArtifactBucketName
+        Type: S3
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: ApplicationSource
+              RunOrder: 1
+              ActionTypeId:
+                Category: Source
+                Provider: CodeStarSourceConnection
+                Owner: AWS
+                Version: '1'
+              OutputArtifacts:
+                - Name: Source
+              Configuration:
+                ConnectionArn: !Ref CodeStarConnection
+                FullRepositoryId: !Ref GithubRepo
+                BranchName: !Ref GitHubBranch
+                OutputArtifactFormat: "CODE_ZIP"
+
+        - Name: Build
+          Actions:
+            - Name: BuildContainerImage
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: ImageDefinition
+              Configuration:
+                ProjectName: !GetAtt CodeBuildBakeImageStack.Outputs.CodeBuildProjectName
+                BatchEnabled: false
+
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              RunOrder: 1
+              ActionTypeId:
+                Category: Deploy
+                Provider: ECS
+                Owner: AWS
+                Version: '1'
+              InputArtifacts:
+                - Name: ImageDefinition
+              Configuration:
+                DeploymentTimeout: "10"
+                ClusterName:
+                  Fn::ImportValue: !Sub "${ClusterStack}ClusterName"
+                ServiceName:
+                  Fn::ImportValue: !Sub "${ServiceStack}ServiceName"
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: ['sts:AssumeRole']
+            Effect: Allow
+            Principal:
+              Service: [codepipeline.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}EcsDeployPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: TaskDefinitionPermissions
+                Effect: Allow
+                Action:
+                  - ecs:DescribeTaskDefinition
+                  - ecs:RegisterTaskDefinition
+                Resource: "*"
+
+              - Sid: ECSServicePermissions
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTasks
+                  - ecs:ListTasks
+                  - ecs:UpdateService
+                Resource: arn:aws:ecs:*:651746472793:service/cruddur/*
+
+              - Sid: ECSTagResource
+                Effect: Allow
+                Action: ecs:TagResource
+                Resource: "*"
+
+        - PolicyName: !Sub ${AWS::StackName}IamPassRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - Fn::ImportValue: !Sub "${ServiceStack}TaskExecutionRoleArn"
+                  - Fn::ImportValue: !Sub "${ServiceStack}TaskRoleArn"
+                Condition:
+                  StringEquals:
+                    iam:PassedToService:
+                      - ecs.amazonaws.com
+                      - ecs-tasks.amazonaws.com
+
+        - PolicyName: !Sub ${AWS::StackName}CodeStarPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: codestar-connections:UseConnection
+                Resource: arn:aws:codestar-connections:ap-south-1:651746472793:connection/2ca2f7bf-5f18-4c9a-9877-c348455ebd5e
+
+        - PolicyName: !Sub ${AWS::StackName}PipelineInfraPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - cloudformation:*
+                  - iam:PassRole
+                  - iam:CreateRole
+                  - iam:DetachRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRole
+                  - iam:AttachRolePolicy
+                  - iam:GetRole
+                Resource: "*"
+
+        - PolicyName: !Sub ${AWS::StackName}CodeBuildTriggerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:StopBuild
+                  - codebuild:RetryBuild
+                  - codebuild:BatchGetBuilds
+                Resource: arn:aws:codebuild:ap-south-1:651746472793:project/CodeBuild-a8HfoZkWFbbI

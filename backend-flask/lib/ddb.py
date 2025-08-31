@@ -22,7 +22,7 @@ class Ddb:
 
     def list_message_groups(client,my_user_uuid):
         year = str(datetime.now().year)
-        table_name = 'cruddur-messages'
+        table_name = os.getenv("DDB_MESSAGE_TABLE")
         query_params = {
         'TableName': table_name,
         'KeyConditionExpression': 'pk = :pk AND begins_with(sk,:year)',
