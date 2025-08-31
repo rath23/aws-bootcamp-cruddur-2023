@@ -6,7 +6,11 @@ BIN_PATH=$(dirname $FRONTEND_PATH)
 PROJECT_PATH=$(dirname $BIN_PATH)
 FRONTEND_REACT_JS_PATH="$PROJECT_PATH/frontend-react-js"
 
+echo $FRONTEND_REACT_JS_PATH
+
 cd $FRONTEND_REACT_JS_PATH
+
+
 
 REACT_APP_BACKEND_URL="https://api.mycruddur.site" \
 REACT_APP_AWS_PROJECT_REGION="ap-south-1" \

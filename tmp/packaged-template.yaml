@@ -17,7 +17,7 @@ Resources:
   CodeBuildBakeImageStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/e0f9bcfb1882a33c78c0f5d433e65e92.template
+      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/dd3a640e0eb06454709ff8cedffc7d38.template
   CodeStarConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
@@ -93,6 +93,10 @@ Resources:
             ServiceName:
               Fn::ImportValue:
                 Fn::Sub: ${ServiceStack}ServiceName
+          RoleArn:
+            Fn::GetAtt:
+            - CodePipelineRole
+            - Arn
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -112,32 +116,69 @@ Resources:
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Action:
-            - ecs:DescribeServices
+          - Sid: TaskDefinitionPermissions
+            Effect: Allow
+            Action:
             - ecs:DescribeTaskDefinition
+            - ecs:RegisterTaskDefinition
+            Resource: '*'
+          - Sid: ECSServicePermissions
+            Effect: Allow
+            Action:
+            - ecs:DescribeServices
             - ecs:DescribeTasks
             - ecs:ListTasks
-            - ecs:RegisterTaskDefinition
             - ecs:UpdateService
+            - ecs:StopTask
+            - ecs:RunTask
+            Resource: arn:aws:ecs:*:651746472793:service/cruddur/*
+          - Sid: ECSTagResource
             Effect: Allow
+            Action: ecs:TagResource
             Resource: '*'
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}IamPassRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+            - Fn::ImportValue:
+                Fn::Sub: ${ServiceStack}TaskExecutionRoleArn
+            - Fn::ImportValue:
+                Fn::Sub: ${ServiceStack}TaskRoleArn
+            Condition:
+              StringEquals:
+                iam:PassedToService:
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
       - PolicyName:
           Fn::Sub: ${AWS::StackName}CodeStarPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Action:
-            - codestar-connections:UseConnection
-            Effect: Allow
-            Resource:
-              Ref: CodeStarConnection
+          - Effect: Allow
+            Action: codestar-connections:UseConnection
+            Resource: arn:aws:codestar-connections:ap-south-1:651746472793:connection/*
       - PolicyName:
-          Fn::Sub: ${AWS::StackName}CodePipelinePolicy
+          Fn::Sub: ${AWS::StackName}PipelineInfraPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Action:
-            - s3:*
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:PutObject
+            Resource:
+              Fn::Sub: arn:aws:s3:::${ArtifactBucketName}/*
+          - Effect: Allow
+            Action:
+            - s3:ListBucket
+            Resource:
+              Fn::Sub: arn:aws:s3:::${ArtifactBucketName}
+          - Effect: Allow
+            Action:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
@@ -150,27 +191,16 @@ Resources:
             - iam:DeleteRole
             - iam:AttachRolePolicy
             - iam:GetRole
-            - iam:PassRole
-            Effect: Allow
             Resource: '*'
       - PolicyName:
-          Fn::Sub: ${AWS::StackName}CodePipelineBuildPolicy
+          Fn::Sub: ${AWS::StackName}CodeBuildTriggerPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Action:
+          - Effect: Allow
+            Action:
             - codebuild:StartBuild
             - codebuild:StopBuild
             - codebuild:RetryBuild
-            Effect: Allow
-            Resource:
-              Fn::Join:
-              - ''
-              - - 'arn:aws:codebuild:'
-                - Ref: AWS::Region
-                - ':'
-                - Ref: AWS::AccountId
-                - :project/
-                - Fn::GetAtt:
-                  - CodeBuildBakeImageStack
-                  - Outputs.CodeBuildProjectName
+            - codebuild:BatchGetBuilds
+            Resource: arn:aws:codebuild:ap-south-1:651746472793:project/CodeBuild-*

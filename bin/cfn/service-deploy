@@ -1,8 +1,11 @@
 #! /usr/bin/env bash
 set -e # stop the execution of the script if it fails
 
-CFN_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/service/template.yaml"
-CONFIG_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/service/config.toml"
+# CFN_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/service/template.yaml"
+# CONFIG_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/service/config.toml"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CFN_PATH="$REPO_ROOT/aws/cfn/service/template.yaml"
+CONFIG_PATH="$REPO_ROOT/aws/cfn/service/config.toml"
 echo $CFN_PATH
 
 cfn-lint $CFN_PATH

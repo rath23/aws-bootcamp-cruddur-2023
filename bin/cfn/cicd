@@ -1,9 +1,14 @@
 #! /usr/bin/env bash
 #set -e # stop the execution of the script if it fails
 
-CFN_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/cicd/template.yaml"
-CONFIG_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/cicd/config.toml"
-PACKAGED_PATH="/workspace/aws-bootcamp-cruddur-2023/tmp/packaged-template.yaml"
+# CFN_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/cicd/template.yaml"
+# CONFIG_PATH="/workspace/aws-bootcamp-cruddur-2023/aws/cfn/cicd/config.toml"
+# PACKAGED_PATH="/workspace/aws-bootcamp-cruddur-2023/tmp/packaged-template.yaml"
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CFN_PATH="$REPO_ROOT/aws/cfn/cicd/template.yaml"
+CONFIG_PATH="$REPO_ROOT/aws/cfn/cicd/config.toml"
+PACKAGED_PATH="$REPO_ROOT/tmp/packaged-template.yaml"
 PARAMETERS=$(cfn-toml params v2 -t $CONFIG_PATH)
 echo $CFN_PATH
 
