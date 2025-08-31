@@ -13,7 +13,7 @@ from lib.db import db
 
 # DynamoDB client: local by default unless "prod" is passed
 attrs = {'endpoint_url': 'http://localhost:8000'}
-if len(sys.argv) === 2 and "prod" in sys.argv[1]:
+if len(sys.argv) == 2 and "prod" in sys.argv[1]:
     attrs = {}
 
 dynamodb = boto3.client('dynamodb', **attrs)

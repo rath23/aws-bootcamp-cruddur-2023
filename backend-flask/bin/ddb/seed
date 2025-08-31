@@ -15,7 +15,7 @@ attrs = {
   'endpoint_url': 'http://localhost:8000'
 }
 # unset endpoint url for use with production database
-if len(sys.argv) === 2:
+if len(sys.argv) == 2:
   if "prod" in sys.argv[1]:
     attrs = {}
 ddb = boto3.client('dynamodb',**attrs)
@@ -37,8 +37,8 @@ def get_user_uuids():
     'my_handle':  'muqeet',
     'other_handle': 'muneer009'
   })
-  my_user    = next((item for item in users if item["handle"] === 'muqeet'), None)
-  other_user = next((item for item in users if item["handle"] === 'muneer009'), None)
+  my_user    = next((item for item in users if item["handle"] == 'muqeet'), None)
+  other_user = next((item for item in users if item["handle"] == 'muneer009'), None)
   results = {
     'my_user': my_user,
     'other_user': other_user

@@ -12,7 +12,7 @@ def lambda_handler(event, context):
   print('event-data',event)
 
   eventName = event['Records'][0]['eventName']
-  if (eventName === 'REMOVE'):
+  if (eventName == 'REMOVE'):
     print("skip REMOVE event")
     return
   pk = event['Records'][0]['dynamodb']['Keys']['pk']['S']
@@ -20,7 +20,7 @@ def lambda_handler(event, context):
   if pk.startswith('MSG#'):
     group_uuid = pk.replace("MSG#","")
     message = event['Records'][0]['dynamodb']['NewImage']['message']['S']
-    print("GRUP ===>",group_uuid,message)
+    print("GRUP ==>",group_uuid,message)
     
     table_name = 'cruddur-messages'
     index_name = 'message-group-sk-index'
@@ -29,12 +29,12 @@ def lambda_handler(event, context):
       IndexName=index_name,
       KeyConditionExpression=Key('message_group_uuid').eq(group_uuid)
     )
-    print("RESP ===>",data['Items'])
+    print("RESP ==>",data['Items'])
     
     # recreate the message group rows with new SK value
     for i in data['Items']:
       delete_item = table.delete_item(Key={'pk': i['pk'], 'sk': i['sk']})
-      print("DELETE ===>",delete_item)
+      print("DELETE ==>",delete_item)
       
       response = table.put_item(
         Item={
@@ -47,4 +47,4 @@ def lambda_handler(event, context):
           'user_uuid': i['user_uuid']
         }
       )
-      print("CREATE ===>",response)
+      print("CREATE ==>",response)

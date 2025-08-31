@@ -11,19 +11,19 @@ class CreateMessage:
       'data': None
     }
 
-    if (mode === "update"):
-      if message_group_uuid === None or len(message_group_uuid) < 1:
+    if (mode == "update"):
+      if message_group_uuid == None or len(message_group_uuid) < 1:
         model['errors'] = ['message_group_uuid_blank']
 
 
-    if cognito_user_id === None or len(cognito_user_id) < 1:
+    if cognito_user_id == None or len(cognito_user_id) < 1:
       model['errors'] = ['cognito_user_id_blank']
 
-    if (mode === "create"):
-      if user_receiver_handle === None or len(user_receiver_handle) < 1:
+    if (mode == "create"):
+      if user_receiver_handle == None or len(user_receiver_handle) < 1:
         model['errors'] = ['user_reciever_handle_blank']
 
-    if message === None or len(message) < 1:
+    if message == None or len(message) < 1:
       model['errors'] = ['message_blank'] 
     elif len(message) > 1024:
       model['errors'] = ['message_exceed_max_chars'] 
@@ -38,7 +38,7 @@ class CreateMessage:
     else:
       sql = db.template('users','create_message_users')
 
-      if user_receiver_handle === None:
+      if user_receiver_handle == None:
         rev_handle = ''
       else:
         rev_handle = user_receiver_handle
@@ -46,20 +46,20 @@ class CreateMessage:
         'cognito_user_id': cognito_user_id,
         'user_receiver_handle': rev_handle
       })
-      print("USERS =-=-=-=-===")
+      print("USERS =-=-=-=-==")
       print(users)
 
-      my_user    = next((item for item in users if item["kind"] === 'sender'), None)
-      other_user = next((item for item in users if item["kind"] === 'recv')  , None)
+      my_user    = next((item for item in users if item["kind"] == 'sender'), None)
+      other_user = next((item for item in users if item["kind"] == 'recv')  , None)
 
-      print("USERS=[my-user]===")
+      print("USERS=[my-user]==")
       print(my_user)
-      print("USERS=[other-user]===")
+      print("USERS=[other-user]==")
       print(other_user)
 
       ddb = Ddb.client()
 
-      if (mode === "update"):
+      if (mode == "update"):
         data = Ddb.create_message(
           client=ddb,
           message_group_uuid=message_group_uuid,
@@ -68,7 +68,7 @@ class CreateMessage:
           my_user_display_name=my_user['display_name'],
           my_user_handle=my_user['handle']
         )
-      elif (mode === "create"):
+      elif (mode == "create"):
         data = Ddb.create_message_group(
           client=ddb,
           message=message,

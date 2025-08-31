@@ -15,7 +15,7 @@ STACK_NAME=$(cfn-toml key deploy.stack_name -t $CONFIG_PATH)
 
 # package
 # -----------------
-echo "=== packaging CFN to S3..."
+echo "== packaging CFN to S3..."
 aws cloudformation package \
   --template-file $CFN_PATH \
   --s3-bucket $BUCKET \

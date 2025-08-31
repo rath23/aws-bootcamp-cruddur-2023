@@ -7,7 +7,7 @@ class UserActivities:
       'errors': None,
       'data': None
     }
-    if user_handle === None or len(user_handle) < 1:
+    if user_handle == None or len(user_handle) < 1:
       model['errors'] = ['blank_user_handle']
     else:
       print("else:")

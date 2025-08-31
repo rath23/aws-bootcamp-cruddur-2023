@@ -16,6 +16,7 @@ from services.messages import *
 from services.create_message import *
 from services.show_activity import *
 from services.show_activity import *
+from services.show_activity import *
 
 # HoneyComb import
 from opentelemetry import trace
@@ -315,6 +316,7 @@ def data_search():
 
 @app.route("/api/activities", methods=["POST", "OPTIONS"])
 @cross_origin()
+@requires_auth
 def data_activities():
     user_handle = request.json["user_handle"]
     message = request.json["message"]
@@ -335,10 +337,13 @@ def data_show_activity(activity_uuid):
 
 @app.route("/api/activities/<string:activity_uuid>/reply", methods=["POST", "OPTIONS"])
 @cross_origin()
+@requires_auth
 def data_activities_reply(activity_uuid):
-    user_handle = "andrewbrown"
+    access_token = extract_access_token(request.headers)
+    claims = cognito_jwt_token.verify(access_token)
+    cognito_user_id = claims['sub']
     message = request.json["message"]
-    model = CreateReply.run(message, user_handle, activity_uuid)
+    model = CreateReply.run(message, cognito_user_id, activity_uuid)
     if model["errors"] is not None:
         return model["errors"], 422
     else:
@@ -353,6 +358,7 @@ def data_users_short(handle):
 
 @app.route("/api/profile/update", methods=['POST','OPTIONS'])
 @cross_origin()
+@requires_auth
 def data_update_profile():
   bio          = request.json.get('bio',None)
   display_name = request.json.get('display_name',None)
@@ -374,5 +380,10 @@ def data_update_profile():
     app.logger.debug(e)
     return {}, 401
 
-if __name__ === "__main__":
+  @app.route("/api/activities/@<string:handle>/status/<string:activity_uuid>", methods=['GET'])
+  def data_show_activity(handle,activity_uuid):
+    data = ShowActivity.run(activity_uuid)
+    return data, 200
+
+if __name__ == "__main__":
     app.run(debug=True)

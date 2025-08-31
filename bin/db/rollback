@@ -38,13 +38,13 @@ migration_files = glob.glob(f"{migrations_path}/*")
 
 last_migration_file = None
 for migration_file in migration_files:
-  if last_migration_file === None:
+  if last_migration_file == None:
     filename = os.path.basename(migration_file)
     module_name = os.path.splitext(filename)[0]
     match = re.match(r'^\d+', filename)
     if match:
       file_time = int(match.group())
-      print("===<><>")
+      print("==<><>")
       print(last_successful_run, file_time)
       print(last_successful_run > file_time)
       if last_successful_run > file_time:
@@ -52,4 +52,4 @@ for migration_file in migration_files:
         mod = importlib.import_module(module_name)
         print('=== rolling back: ',module_name)
         mod.migration.rollback()
-        set_last_successful_run(file_time)
+        set_last_successful_run(str(file_time))
