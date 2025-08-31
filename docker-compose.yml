@@ -7,6 +7,8 @@ services:
     environment:
       DYNAMODB_ENDPOINT: "http://dynamodb-local:8000"
       PROD_CONNECTION_URL: "${PROD_CONNECTION_URL}"
+      DDB_MESSAGE_TABLE : "CrdDdb-DynamoDBTable-18MYW2UXZQRVL"
+      # DDB_MESSAGE_TABLE :"cruddur-messages"
       # PROD_CONNECTION_URL: "postgresql://root:Mko1998A@cruddur-db-instance1.cl8u60w4s3dg.ap-south-1.rds.amazonaws.com:5432/cruddur"
       # CONNECTION_URL: "postgresql://postgres:password@db:5432/cruddur"
       FRONTEND_URL: "https://3000-${GITPOD_WORKSPACE_ID}.${GITPOD_WORKSPACE_CLUSTER_HOST}"

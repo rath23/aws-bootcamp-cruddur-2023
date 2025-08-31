@@ -72,7 +72,10 @@ Parameters:
   SecretsAWSUserPoolsWebClientId:
     Type: String
     Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_USER_POOLS_WEB_CLIENT_ID'
-
+  DDBMessageTable:
+    Type: String
+    Default: cruddur-messages
+    
 Resources:
   FargateService:
     Type: AWS::ECS::Service
@@ -156,6 +159,8 @@ Resources:
               awslogs-region: ap-south-1
               awslogs-stream-prefix: !Ref ServiceName
           Environment:
+            - Name: DDB_MESSAGE_TABLE
+              Value: !Ref DDBMessageTable
             - Name: 'OTEL_SERVICE_NAME'
               Value: !Ref EnvOtelServiceName
             - Name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
