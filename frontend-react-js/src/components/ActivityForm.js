@@ -19,8 +19,10 @@ export default function ActivityForm(props) {
 
   const onsubmit = async (event) => {
     event.preventDefault();
+    const user_handle = localStorage.getItem("handle");
     const url = `${process.env.REACT_APP_BACKEND_URL}/api/activities`
     const payload_data = {
+      user_handle : user_handle,
       message: message,
       ttl: ttl
     }

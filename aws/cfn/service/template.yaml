@@ -174,9 +174,9 @@ Resources:
               Value: !Ref EnvOtelServiceName
             - Name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
               Value: !Ref EnvOtelExporterOtlpEndpoint
-            - Name: 'AWS_COGNITO_USER_POOL_ID'
+            - Name: 'AWS_USER_POOL_ID'
               Value: !Ref EnvAWSCognitoUserPoolId
-            - Name: 'AWS_COGNITO_USER_POOL_CLIENT_ID'
+            - Name: 'AWS_USER_POOLS_WEB_CLIENT_ID'
               Value: !Ref EnvCognitoUserPoolClientId
             - Name: 'FRONTEND_URL'
               Value: !Ref EnvFrontendUrl
