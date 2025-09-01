@@ -1,4 +1,6 @@
-class ActivityUuidFromIntToStringMigration(Migration):
+from lib.db import db
+
+class ActivityUuidFromIntToStringMigration:
   def migrate_sql():
     data = """
     ALTER TABLE activities DROP COLUMN reply_to_activity_uuid;

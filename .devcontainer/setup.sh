@@ -82,3 +82,4 @@ if [ -n "${CODESPACE_VSCODE_FOLDER-}" ] && [ -f "$CODESPACE_VSCODE_FOLDER/backen
 fi
 
 echo "=== Environment setup complete! ==="
+
