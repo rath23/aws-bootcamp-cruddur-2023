@@ -9,27 +9,32 @@ Parameters:
     Default: prod
   GithubRepo:
     Type: String
-    Default: 'rath23/aws-bootcamp-cruddur-2023'
+    Default: 'omenking/aws-bootcamp-cruddur-2023'
   ClusterStack:
     Type: String
   ServiceStack:
     Type: String
   ArtifactBucketName:
     Type: String
-
+  BuildSpec:
+    Type: String
 Resources:
-  CodeBuildBakeImageStack:
+  Codebuild:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-stack.html
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: nested/codebuild.yaml
-
+      Parameters:
+        ArtifactBucketName: !Ref ArtifactBucketName
+        BuildSpec: !Ref BuildSpec
   CodeStarConnection:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-codestarconnections-connection.html
     Type: AWS::CodeStarConnections::Connection
     Properties:
       ConnectionName: !Sub ${AWS::StackName}-connection
       ProviderType: GitHub
-
   Pipeline:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-codepipeline-pipeline.html
     Type: AWS::CodePipeline::Pipeline
     Properties:
       ArtifactStore:
@@ -53,7 +58,6 @@ Resources:
                 FullRepositoryId: !Ref GithubRepo
                 BranchName: !Ref GitHubBranch
                 OutputArtifactFormat: "CODE_ZIP"
-
         - Name: Build
           Actions:
             - Name: BuildContainerImage
@@ -68,9 +72,9 @@ Resources:
               OutputArtifacts:
                 - Name: ImageDefinition
               Configuration:
-                ProjectName: !GetAtt CodeBuildBakeImageStack.Outputs.CodeBuildProjectName
+                ProjectName: !GetAtt Codebuild.Outputs.CodeBuildProjectName
                 BatchEnabled: false
-
+        # https://docs.aws.amazon.com/codepipeline/latest/userguide/action-reference-ECS.html
         - Name: Deploy
           Actions:
             - Name: Deploy
@@ -83,24 +87,42 @@ Resources:
               InputArtifacts:
                 - Name: ImageDefinition
               Configuration:
+                # In Minutes
                 DeploymentTimeout: "10"
                 ClusterName:
-                  Fn::ImportValue: !Sub "${ClusterStack}ClusterName"
-                ServiceName:
-                  Fn::ImportValue: !Sub "${ServiceStack}ServiceName"
-
+                  Fn::ImportValue:
+                    !Sub ${ClusterStack}ClusterName
+                # We decided not use a cross-stack so we can tear
+                # down a service seperate from it.
+                ServiceName: backend-flask
+                #  Fn::ImportValue:
+                #    !Sub ${ServiceStack}ServiceName
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-          - Action: ['sts:AssumeRole']
-            Effect: Allow
-            Principal:
-              Service: [codepipeline.amazonaws.com]
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codepipeline.amazonaws.com]
         Version: '2012-10-17'
       Path: /
       Policies:
+        # When the Application Source downloads the code.
+        # It needs to zip it and place it a bucket, so we need
+        # to suplly an artifacts bucket.
+        - PolicyName: !Sub ${AWS::StackName}S3ArtifactAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - s3:*
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}
+                  - !Sub arn:aws:s3:::${ArtifactBucketName}/*
+                  
         - PolicyName: !Sub ${AWS::StackName}EcsDeployPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -116,25 +138,26 @@ Resources:
                 Effect: Allow
                 Action:
                   - ecs:DescribeServices
-                  - ecs:DescribeTasks
-                  - ecs:ListTasks
                   - ecs:UpdateService
-                Resource: arn:aws:ecs:*:651746472793:service/cruddur/*
+                Resource: "*"
 
               - Sid: ECSTagResource
                 Effect: Allow
-                Action: ecs:TagResource
-                Resource: "*"
+                Action:
+                  - ecs:TagResource
+                Resource:
+                  - arn:aws:ecs:ap-south-1:651746472793:task-definition/backend-flask:*
+                Condition:
+                  StringEquals:
+                    ecs:CreateAction:
+                      - RegisterTaskDefinition
 
-        - PolicyName: !Sub ${AWS::StackName}IamPassRolePolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
+              - Sid: IamPassRolePermissions
+                Effect: Allow
                 Action: iam:PassRole
                 Resource:
-                  - Fn::ImportValue: !Sub "${ServiceStack}TaskExecutionRoleArn"
-                  - Fn::ImportValue: !Sub "${ServiceStack}TaskRoleArn"
+                  - arn:aws:iam::651746472793:role/CruddurServiceTaskRole
+                  - arn:aws:iam::651746472793:role/CruddurServiceExecutionRole3
                 Condition:
                   StringEquals:
                     iam:PassedToService:
@@ -145,39 +168,49 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
-                Action: codestar-connections:UseConnection
-                Resource: arn:aws:codestar-connections:ap-south-1:651746472793:connection/2ca2f7bf-5f18-4c9a-9877-c348455ebd5e
-
-        - PolicyName: !Sub ${AWS::StackName}PipelineInfraPolicy
+              - Action:
+                - codestar-connections:UseConnection
+                Effect: Allow
+                Resource:
+                  !Ref CodeStarConnection
+        - PolicyName: !Sub ${AWS::StackName}CodePipelinePolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
-                Action:
-                  - s3:*
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                  - cloudformation:*
-                  - iam:PassRole
-                  - iam:CreateRole
-                  - iam:DetachRolePolicy
-                  - iam:DeleteRolePolicy
-                  - iam:PutRolePolicy
-                  - iam:DeleteRole
-                  - iam:AttachRolePolicy
-                  - iam:GetRole
-                Resource: "*"
-
-        - PolicyName: !Sub ${AWS::StackName}CodeBuildTriggerPolicy
+              - Action:
+                - s3:*
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                - cloudformation:*
+                - iam:PassRole
+                - iam:CreateRole
+                - iam:DetachRolePolicy
+                - iam:DeleteRolePolicy
+                - iam:PutRolePolicy
+                - iam:DeleteRole
+                - iam:AttachRolePolicy
+                - iam:GetRole
+                - iam:PassRole
+                Effect: Allow
+                Resource: '*'
+        - PolicyName: !Sub ${AWS::StackName}CodePipelineBuildPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
-                Action:
-                  - codebuild:StartBuild
-                  - codebuild:StopBuild
-                  - codebuild:RetryBuild
-                  - codebuild:BatchGetBuilds
-                Resource: arn:aws:codebuild:ap-south-1:651746472793:project/CodeBuild-a8HfoZkWFbbI
+              - Action:
+                - codebuild:StartBuild
+                - codebuild:StopBuild
+                - codebuild:RetryBuild
+                # even though we are not Batch for CodeBuild
+                # AWS Still requires permissions
+                - codebuild:BatchGetBuilds
+                Effect: Allow
+                Resource: !Join
+                  - ''
+                  - - 'arn:aws:codebuild:'
+                    - !Ref AWS::Region
+                    - ':'
+                    - !Ref AWS::AccountId
+                    - ':project/'
+                    - !GetAtt Codebuild.Outputs.CodeBuildProjectName

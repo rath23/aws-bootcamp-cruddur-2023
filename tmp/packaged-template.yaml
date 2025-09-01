@@ -6,18 +6,25 @@ Parameters:
     Default: prod
   GithubRepo:
     Type: String
-    Default: rath23/aws-bootcamp-cruddur-2023
+    Default: omenking/aws-bootcamp-cruddur-2023
   ClusterStack:
     Type: String
   ServiceStack:
     Type: String
   ArtifactBucketName:
     Type: String
+  BuildSpec:
+    Type: String
 Resources:
-  CodeBuildBakeImageStack:
+  Codebuild:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/e0f9bcfb1882a33c78c0f5d433e65e92.template
+      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/b5c0ff2e49b323f5ebc2342228aa81a5.template
+      Parameters:
+        ArtifactBucketName:
+          Ref: ArtifactBucketName
+        BuildSpec:
+          Ref: BuildSpec
   CodeStarConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
@@ -71,7 +78,7 @@ Resources:
           Configuration:
             ProjectName:
               Fn::GetAtt:
-              - CodeBuildBakeImageStack
+              - Codebuild
               - Outputs.CodeBuildProjectName
             BatchEnabled: false
       - Name: Deploy
@@ -90,9 +97,7 @@ Resources:
             ClusterName:
               Fn::ImportValue:
                 Fn::Sub: ${ClusterStack}ClusterName
-            ServiceName:
-              Fn::ImportValue:
-                Fn::Sub: ${ServiceStack}ServiceName
+            ServiceName: backend-flask
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -107,6 +112,17 @@ Resources:
         Version: '2012-10-17'
       Path: /
       Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}S3ArtifactAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action:
+            - s3:*
+            Effect: Allow
+            Resource:
+            - Fn::Sub: arn:aws:s3:::${ArtifactBucketName}
+            - Fn::Sub: arn:aws:s3:::${ArtifactBucketName}/*
       - PolicyName:
           Fn::Sub: ${AWS::StackName}EcsDeployPolicy
         PolicyDocument:
@@ -162,6 +178,7 @@ Resources:
             - codebuild:StartBuild
             - codebuild:StopBuild
             - codebuild:RetryBuild
+            - codebuild:BatchGetBuilds
             Effect: Allow
             Resource:
               Fn::Join:
@@ -172,5 +189,5 @@ Resources:
                 - Ref: AWS::AccountId
                 - :project/
                 - Fn::GetAtt:
-                  - CodeBuildBakeImageStack
+                  - Codebuild
                   - Outputs.CodeBuildProjectName

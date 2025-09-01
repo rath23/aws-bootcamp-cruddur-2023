@@ -329,12 +329,6 @@ def data_activities():
     return
 
 
-@app.route("/api/activities/<string:activity_uuid>", methods=["GET"])
-def data_show_activity(activity_uuid):
-    data = ShowActivity.run(activity_uuid=activity_uuid)
-    return data, 200
-
-
 @app.route("/api/activities/<string:activity_uuid>/reply", methods=["POST", "OPTIONS"])
 @cross_origin()
 @requires_auth
@@ -380,10 +374,10 @@ def data_update_profile():
     app.logger.debug(e)
     return {}, 401
 
-  @app.route("/api/activities/@<string:handle>/status/<string:activity_uuid>", methods=['GET'])
-  def data_show_activity(handle,activity_uuid):
+@app.route("/api/activities/@<string:handle>/status/<string:activity_uuid>", methods=['GET'])
+def data_show_activity(handle,activity_uuid):
     data = ShowActivity.run(activity_uuid)
-    return data, 200
+    return data, 200    
 
 if __name__ == "__main__":
     app.run(debug=True)

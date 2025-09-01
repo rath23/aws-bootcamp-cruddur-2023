@@ -5,6 +5,7 @@ stack_name = 'CrdCicd'
 
 [parameters]
 ServiceStack = 'CrdSrvBackendFlask'
+BuildSpec = 'backend-flask/buildspec.yml'
 ClusterStack = 'CrdCluster'
 GitHubBranch = 'prod'
 GithubRepo = 'rath23/aws-bootcamp-cruddur-2023'

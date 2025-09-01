@@ -1,0 +1,130 @@
+
+CrdCicdEcsDeployPolicy
+{
+
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ecs:DescribeTaskDefinition",
+                "ecs:RegisterTaskDefinition"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "TaskDefinitionPermissions"
+        },
+        {
+            "Action": [
+                "ecs:DescribeServices",
+                "ecs:DescribeTasks",
+                "ecs:ListTasks",
+                "ecs:UpdateService",
+                "ecs:StopTask",
+                "ecs:RunTask"
+            ],
+            "Resource": "arn:aws:ecs:*:651746472793:service/cruddur/*",
+            "Effect": "Allow",
+            "Sid": "ECSServicePermissions"
+        },
+        {
+            "Action": "ecs:TagResource",
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "ECSTagResource"
+        }
+    ]
+}
+
+---------------------------
+CrdCicdCodeStarPolicy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "codestar-connections:UseConnection",
+            "Resource": "arn:aws:codestar-connections:ap-south-1:651746472793:connection/*",
+            "Effect": "Allow"
+        }
+    ]
+}
+
+---------------------------
+CrdCicdCodeBuildTriggerPolicy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "codebuild:StartBuild",
+                "codebuild:StopBuild",
+                "codebuild:RetryBuild",
+                "codebuild:BatchGetBuilds"
+            ],
+            "Resource": "arn:aws:codebuild:ap-south-1:651746472793:project/CodeBuild-*",
+            "Effect": "Allow"
+        }
+    ]
+}
+-----------------------------
+CrdCicdIamPassRolePolicy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": [
+                        "ecs.amazonaws.com",
+                        "ecs-tasks.amazonaws.com"
+                    ]
+                }
+            },
+            "Action": "iam:PassRole",
+            "Resource": [
+                "arn:aws:iam::651746472793:role/CruddurServiceExecutionRole2",
+                "arn:aws:iam::651746472793:role/CruddurServiceTaskRole"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+------------------------------
+CrdCicdPipelineInfraPolicy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-f6c/Source/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::codepipeline-cruddur-artifacts-maq/CrdCicd-Pipeline-f6c/ImageDefin/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "cloudformation:*",
+                "iam:PassRole",
+                "iam:CreateRole",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:DeleteRole",
+                "iam:AttachRolePolicy",
+                "iam:GetRole"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+    ]
+}
