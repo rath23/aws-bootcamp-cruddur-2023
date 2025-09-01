@@ -8,9 +8,11 @@ Description: |
 Parameters:
   NetworkingStack:
     Type: String
+    Description: This is our base layer of networking components eg. VPC, Subnets
     Default: CrdNet
   ClusterStack:
     Type: String
+    Description: This is our cluster layer eg. ECS Cluster, ALB
     Default: CrdCluster
   ContainerPort:
     Type: Number
@@ -24,6 +26,9 @@ Parameters:
   ServiceName:
     Type: String
     Default: backend-flask
+  ContainerName:
+    Type: String
+    Default: backend-flask
   TaskFamily:
     Type: String
     Default: backend-flask
@@ -33,7 +38,7 @@ Parameters:
   EnvOtelServiceName:
     Type: String
     Default: backend-flask
-  EnvOtelExporterOltpEndpoint:
+  EnvOtelExporterOtlpEndpoint:
     Type: String
     Default: https://api.honeycomb.io
   EnvAWSCognitoUserPoolId:
@@ -50,35 +55,31 @@ Parameters:
     Default: "*"
   SecretsAWSAccessKeyId:
     Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_ACCESS_KEY_ID
+    Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_ACCESS_KEY_ID'
   SecretsSecretAccessKey:
     Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_SECRET_ACCESS_KEY
+    Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_SECRET_ACCESS_KEY'
   SecretsConnectionUrl:
     Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/PROD_CONNECTION_URL
+    Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/PROD_CONNECTION_URL'
   SecretsRollbarAccessToken:
     Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/ROLLBAR_ACCESS_TOKEN
+    Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/ROLLBAR_ACCESS_TOKEN'
   SecretsOtelExporterOltpHeaders:
     Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/OTEL_EXPORTER_OTLP_HEADERS
-  SecretsAWSUserPoolId:
-    Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_USER_POOL_ID
-  SecretsAWSUserPoolsWebClientId:
-    Type: String
-    Default: arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/AWS_USER_POOLS_WEB_CLIENT_ID
+    Default: 'arn:aws:ssm:ap-south-1:651746472793:parameter/cruddur/backend-flask/OTEL_EXPORTER_OTLP_HEADERS'
   DDBMessageTable:
     Type: String
     Default: cruddur-messages
-
+  
 Resources:
   FargateService:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
     Type: AWS::ECS::Service
     Properties:
       Cluster:
-        Fn::ImportValue: !Sub "${ClusterStack}ClusterName"
+        Fn::ImportValue:
+          !Sub "${ClusterStack}ClusterName"
       DeploymentController:
         Type: ECS
       DesiredCount: 1
@@ -88,177 +89,177 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         - TargetGroupArn:
-            Fn::ImportValue: !Sub "${ClusterStack}BackendTGArn"
-          ContainerName: backend-flask
+            Fn::ImportValue:
+              !Sub "${ClusterStack}BackendTGArn"
+          ContainerName: 'backend-flask'
           ContainerPort: !Ref ContainerPort
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - Fn::ImportValue: !Sub "${ClusterStack}ServiceSecurityGroupId"
+            - Fn::ImportValue:
+                !Sub "${ClusterStack}ServiceSecurityGroupId"
           Subnets:
             Fn::Split:
               - ","
-              - Fn::ImportValue: !Sub "${NetworkingStack}PublicSubnetIds"
+              - Fn::ImportValue:
+                  !Sub "${NetworkingStack}PublicSubnetIds"
       PlatformVersion: LATEST
       PropagateTags: SERVICE
       ServiceConnectConfiguration:
         Enabled: true
-        Namespace: cruddur
+        Namespace: "cruddur"
+        # TODO - If you want to log
+        # LogConfiguration
         Services:
           - DiscoveryName: backend-flask
             PortName: backend-flask
             ClientAliases:
               - Port: !Ref ContainerPort
+      #ServiceRegistries:
+      #  - RegistryArn: !Sub 'arn:aws:servicediscovery:${AWS::Region}:${AWS::AccountId}:service/srv-cruddur-backend-flask'
+      #    Port: !Ref ContainerPort
+      #    ContainerName: 'backend-flask'
+      #    ContainerPort: !Ref ContainerPort
       ServiceName: !Ref ServiceName
       TaskDefinition: !Ref TaskDefinition
 
   TaskDefinition:
-    Type: AWS::ECS::TaskDefinition
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
+    Type: 'AWS::ECS::TaskDefinition'
     Properties:
       Family: !Ref TaskFamily
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      NetworkMode: awsvpc
+      NetworkMode: 'awsvpc'
       Cpu: !Ref ServiceCpu
       Memory: !Ref ServiceMemory
       RequiresCompatibilities:
-        - FARGATE
+        - 'FARGATE'
       ContainerDefinitions:
-        - Name: xray
-          Image: public.ecr.aws/xray/aws-xray-daemon
+        - Name: 'xray'
+          Image: 'public.ecr.aws/xray/aws-xray-daemon'
           Essential: true
-          User: "1337"
+          User: '1337'
           PortMappings:
-            - ContainerPort: 2000
-              Protocol: udp
-        - Name: backend-flask
-          Image: !Ref EcrImage
+            - Name: 'xray'
+              ContainerPort: 2000
+              Protocol: 'udp'
+        - Name: 'backend-flask'
+          Image: !Ref EcrImage 
           Essential: true
           HealthCheck:
             Command:
-              - CMD-SHELL
-              - ./bin/flask/health-check
+              - 'CMD-SHELL'
+              - './bin/flask/health-check'
             Interval: 30
-            Timeout: 5
+            Timeout: 6
             Retries: 3
             StartPeriod: 60
           PortMappings:
-            - ContainerPort: !Ref ContainerPort
-              Protocol: tcp
-              AppProtocol: http
-              Name: backend-flask
+            - Name: !Ref ContainerName
+              ContainerPort: !Ref ContainerPort
+              Protocol: 'tcp'
+              AppProtocol: 'http'
           LogConfiguration:
-            LogDriver: awslogs
+            LogDriver: 'awslogs'
             Options:
-              awslogs-group: cruddur
-              awslogs-region: ap-south-1
+              awslogs-group: 'cruddur'
+              awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ServiceName
           Environment:
             - Name: DDB_MESSAGE_TABLE
               Value: !Ref DDBMessageTable
-            - Name: OTEL_SERVICE_NAME
+            - Name: 'OTEL_SERVICE_NAME'
               Value: !Ref EnvOtelServiceName
-            - Name: OTEL_EXPORTER_OTLP_ENDPOINT
-              Value: !Ref EnvOtelExporterOltpEndpoint
-            - Name: AWS_COGNITO_USER_POOL_ID
+            - Name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
+              Value: !Ref EnvOtelExporterOtlpEndpoint
+            - Name: 'AWS_COGNITO_USER_POOL_ID'
               Value: !Ref EnvAWSCognitoUserPoolId
-            - Name: AWS_COGNITO_USER_POOL_CLIENT_ID
+            - Name: 'AWS_COGNITO_USER_POOL_CLIENT_ID'
               Value: !Ref EnvCognitoUserPoolClientId
-            - Name: FRONTEND_URL
+            - Name: 'FRONTEND_URL'
               Value: !Ref EnvFrontendUrl
-            - Name: BACKEND_URL
+            - Name: 'BACKEND_URL'
               Value: !Ref EnvBackendUrl
-            - Name: AWS_DEFAULT_REGION
-              Value: ap-south-1
+            - Name: 'AWS_DEFAULT_REGION'
+              Value: !Ref AWS::Region
           Secrets:
-            - Name: AWS_ACCESS_KEY_ID
+            - Name: 'AWS_ACCESS_KEY_ID'
               ValueFrom: !Ref SecretsAWSAccessKeyId
-            - Name: AWS_SECRET_ACCESS_KEY
+            - Name: 'AWS_SECRET_ACCESS_KEY'
               ValueFrom: !Ref SecretsSecretAccessKey
-            - Name: PROD_CONNECTION_URL
+            - Name: 'PROD_CONNECTION_URL'
               ValueFrom: !Ref SecretsConnectionUrl
-            - Name: ROLLBAR_ACCESS_TOKEN
+            - Name: 'ROLLBAR_ACCESS_TOKEN'
               ValueFrom: !Ref SecretsRollbarAccessToken
-            - Name: OTEL_EXPORTER_OTLP_HEADERS
+            - Name: 'OTEL_EXPORTER_OTLP_HEADERS'
               ValueFrom: !Ref SecretsOtelExporterOltpHeaders
-            - Name: AWS_USER_POOL_ID
-              ValueFrom: !Ref SecretsAWSUserPoolId
-            - Name: AWS_USER_POOLS_WEB_CLIENT_ID
-              ValueFrom: !Ref SecretsAWSUserPoolsWebClientId
-
   ExecutionRole:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
     Type: AWS::IAM::Role
     Properties:
-      RoleName: CruddurServiceExecutionRole2
+      RoleName: CruddurServiceExecutionRole3
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
+          - Effect: 'Allow'
             Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
+              Service: 'ecs-tasks.amazonaws.com'
+            Action: 'sts:AssumeRole'
       Policies:
-        - PolicyName: cruddur-execution-policy
+        - PolicyName: 'cruddur-execution-policy'
           PolicyDocument:
-            Version: 2012-10-17
+            Version: '2012-10-17'
             Statement:
-              - Effect: Allow
+              - Sid: 'VisualEditor0'
+                Effect: 'Allow'
                 Action:
-                  - ecr:GetAuthorizationToken
-                  - ecr:BatchCheckLayerAvailability
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: "*"
-              - Effect: Allow
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+              - Sid: 'VisualEditor1'
+                Effect: 'Allow'
                 Action:
-                  - ssm:GetParameters
-                  - ssm:GetParameter
-                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cruddur/${ServiceName}/*
+                  - 'ssm:GetParameters'
+                  - 'ssm:GetParameter'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cruddur/${ServiceName}/*'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-
   TaskRole:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
     Type: AWS::IAM::Role
     Properties:
       RoleName: CruddurServiceTaskRole
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
+          - Effect: 'Allow'
             Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
+              Service: 'ecs-tasks.amazonaws.com'
+            Action: 'sts:AssumeRole'
       Policies:
-        - PolicyName: cruddur-task-policy
+        - PolicyName: 'cruddur-task-policy'
           PolicyDocument:
-            Version: 2012-10-17
+            Version: '2012-10-17'
             Statement:
-              - Effect: Allow
+              - Sid: 'VisualEditor0'
+                Effect: 'Allow'
                 Action:
                   - ssmmessages:CreateControlChannel
                   - ssmmessages:CreateDataChannel
                   - ssmmessages:OpenControlChannel
                   - ssmmessages:OpenDataChannel
-                Resource: "*"
+                Resource: '*'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
-
 Outputs:
   ServiceName:
     Value: !GetAtt FargateService.Name
     Export:
       Name: !Sub "${AWS::StackName}ServiceName"
-
-  TaskExecutionRoleArn:
-    Value: !GetAtt ExecutionRole.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}TaskExecutionRoleArn"
-
-  TaskRoleArn:
-    Value: !GetAtt TaskRole.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}TaskRoleArn"

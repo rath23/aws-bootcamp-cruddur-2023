@@ -6,18 +6,25 @@ Parameters:
     Default: prod
   GithubRepo:
     Type: String
-    Default: rath23/aws-bootcamp-cruddur-2023
+    Default: omenking/aws-bootcamp-cruddur-2023
   ClusterStack:
     Type: String
   ServiceStack:
     Type: String
   ArtifactBucketName:
     Type: String
+  BuildSpec:
+    Type: String
 Resources:
-  CodeBuildBakeImageStack:
+  Codebuild:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/dd3a640e0eb06454709ff8cedffc7d38.template
+      TemplateURL: https://s3.ap-south-1.amazonaws.com/cfn-artifacts-bckt/cicd-package/b5c0ff2e49b323f5ebc2342228aa81a5.template
+      Parameters:
+        ArtifactBucketName:
+          Ref: ArtifactBucketName
+        BuildSpec:
+          Ref: BuildSpec
   CodeStarConnection:
     Type: AWS::CodeStarConnections::Connection
     Properties:
@@ -71,7 +78,7 @@ Resources:
           Configuration:
             ProjectName:
               Fn::GetAtt:
-              - CodeBuildBakeImageStack
+              - Codebuild
               - Outputs.CodeBuildProjectName
             BatchEnabled: false
       - Name: Deploy
@@ -90,13 +97,7 @@ Resources:
             ClusterName:
               Fn::ImportValue:
                 Fn::Sub: ${ClusterStack}ClusterName
-            ServiceName:
-              Fn::ImportValue:
-                Fn::Sub: ${ServiceStack}ServiceName
-          RoleArn:
-            Fn::GetAtt:
-            - CodePipelineRole
-            - Arn
+            ServiceName: backend-flask
   CodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -112,73 +113,47 @@ Resources:
       Path: /
       Policies:
       - PolicyName:
+          Fn::Sub: ${AWS::StackName}S3ArtifactAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action:
+            - s3:*
+            Effect: Allow
+            Resource:
+            - Fn::Sub: arn:aws:s3:::${ArtifactBucketName}
+            - Fn::Sub: arn:aws:s3:::${ArtifactBucketName}/*
+      - PolicyName:
           Fn::Sub: ${AWS::StackName}EcsDeployPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Sid: TaskDefinitionPermissions
-            Effect: Allow
-            Action:
-            - ecs:DescribeTaskDefinition
-            - ecs:RegisterTaskDefinition
-            Resource: '*'
-          - Sid: ECSServicePermissions
-            Effect: Allow
-            Action:
+          - Action:
             - ecs:DescribeServices
+            - ecs:DescribeTaskDefinition
             - ecs:DescribeTasks
             - ecs:ListTasks
+            - ecs:RegisterTaskDefinition
             - ecs:UpdateService
-            - ecs:StopTask
-            - ecs:RunTask
-            Resource: arn:aws:ecs:*:651746472793:service/cruddur/*
-          - Sid: ECSTagResource
             Effect: Allow
-            Action: ecs:TagResource
             Resource: '*'
-      - PolicyName:
-          Fn::Sub: ${AWS::StackName}IamPassRolePolicy
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action: iam:PassRole
-            Resource:
-            - Fn::ImportValue:
-                Fn::Sub: ${ServiceStack}TaskExecutionRoleArn
-            - Fn::ImportValue:
-                Fn::Sub: ${ServiceStack}TaskRoleArn
-            Condition:
-              StringEquals:
-                iam:PassedToService:
-                - ecs.amazonaws.com
-                - ecs-tasks.amazonaws.com
       - PolicyName:
           Fn::Sub: ${AWS::StackName}CodeStarPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Effect: Allow
-            Action: codestar-connections:UseConnection
-            Resource: arn:aws:codestar-connections:ap-south-1:651746472793:connection/*
+          - Action:
+            - codestar-connections:UseConnection
+            Effect: Allow
+            Resource:
+              Ref: CodeStarConnection
       - PolicyName:
-          Fn::Sub: ${AWS::StackName}PipelineInfraPolicy
+          Fn::Sub: ${AWS::StackName}CodePipelinePolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Effect: Allow
-            Action:
-            - s3:GetObject
-            - s3:PutObject
-            Resource:
-              Fn::Sub: arn:aws:s3:::${ArtifactBucketName}/*
-          - Effect: Allow
-            Action:
-            - s3:ListBucket
-            Resource:
-              Fn::Sub: arn:aws:s3:::${ArtifactBucketName}
-          - Effect: Allow
-            Action:
+          - Action:
+            - s3:*
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
@@ -191,16 +166,28 @@ Resources:
             - iam:DeleteRole
             - iam:AttachRolePolicy
             - iam:GetRole
+            - iam:PassRole
+            Effect: Allow
             Resource: '*'
       - PolicyName:
-          Fn::Sub: ${AWS::StackName}CodeBuildTriggerPolicy
+          Fn::Sub: ${AWS::StackName}CodePipelineBuildPolicy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-          - Effect: Allow
-            Action:
+          - Action:
             - codebuild:StartBuild
             - codebuild:StopBuild
             - codebuild:RetryBuild
             - codebuild:BatchGetBuilds
-            Resource: arn:aws:codebuild:ap-south-1:651746472793:project/CodeBuild-*
+            Effect: Allow
+            Resource:
+              Fn::Join:
+              - ''
+              - - 'arn:aws:codebuild:'
+                - Ref: AWS::Region
+                - ':'
+                - Ref: AWS::AccountId
+                - :project/
+                - Fn::GetAtt:
+                  - Codebuild
+                  - Outputs.CodeBuildProjectName
