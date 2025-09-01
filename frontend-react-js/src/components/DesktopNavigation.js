@@ -10,7 +10,8 @@ export default function DesktopNavigation(props) {
   let profile;
   let notificationsLink;
   let messagesLink;
-  let profileLink;
+  let profileLink; 
+  let user_handle = localStorage.getItem("handle");
   if (props.user) {
     button = <CrudButton setPopped={props.setPopped} />;
     profile = <ProfileInfo user={props.user} />;
@@ -25,7 +26,7 @@ export default function DesktopNavigation(props) {
       handle="messages" 
       active={props.active} />
     profileLink = <DesktopNavigationLink 
-      url="@muqeet" 
+      url= {"@"+user_handle}
       name="Profile"
       handle="profile"
       active={props.active} />
