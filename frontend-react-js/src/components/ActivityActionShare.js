@@ -6,6 +6,7 @@ export default function ActivityActionRepost(props) {
     console.log('trigger share')
     return false
   }
+
   return (
     <div onClick={onclick} className="action activity_action_share">
       <ShareIcon className='icon' />

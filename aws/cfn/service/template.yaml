@@ -43,10 +43,10 @@ Parameters:
     Default: https://api.honeycomb.io
   EnvAWSCognitoUserPoolId:
     Type: String
-    Default: ap-south-1_kBvbUda3z
+    Default: ap-south-1_9QuoMO9Aa
   EnvCognitoUserPoolClientId:
     Type: String
-    Default: 1hpv5obh5k8br43jsp9lnl4fd8
+    Default: 101bun53d28tckn9rh09dnk9c9
   EnvFrontendUrl:
     Type: String
     Default: "*"

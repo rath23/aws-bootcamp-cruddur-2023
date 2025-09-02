@@ -1,11 +1,12 @@
 import './RecoverPage.css';
 import React from "react";
-import { ReactComponent as Logo } from '../components/svg/logo.svg';
+import {ReactComponent as Logo} from '../components/svg/logo.svg';
 import { Link } from "react-router-dom";
+
 import { resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 
 export default function RecoverPage() {
-  // Username is Email
+  // Username is Eamil
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [passwordAgain, setPasswordAgain] = React.useState('');
@@ -13,7 +14,7 @@ export default function RecoverPage() {
   const [errors, setErrors] = React.useState('');
   const [formState, setFormState] = React.useState('send_code');
 
-  const onsubmit_send_code = async (event) => {
+    const onsubmit_send_code = async (event) => {
     event.preventDefault();
     setErrors('');
     try {
@@ -51,15 +52,30 @@ export default function RecoverPage() {
     return false;
   };
 
-  const username_onchange = (event) => setUsername(event.target.value);
-  const password_onchange = (event) => setPassword(event.target.value);
-  const password_again_onchange = (event) => setPasswordAgain(event.target.value);
-  const code_onchange = (event) => setCode(event.target.value);
 
-  const el_errors = errors ? <div className='errors'>{errors}</div> : null;
+  const username_onchange = (event) => {
+    setUsername(event.target.value);
+  }
+  const password_onchange = (event) => {
+    setPassword(event.target.value);
+  }
+  const password_again_onchange = (event) => {
+    setPasswordAgain(event.target.value);
+  }
+  const code_onchange = (event) => {
+    setCode(event.target.value);
+  }
 
-  const send_code = () => (
-    <form className='recover_form' onSubmit={onsubmit_send_code}>
+  let el_errors;
+  if (errors){
+    el_errors = <div className='errors'>{errors}</div>;
+  }
+
+  const send_code = () => {
+    return (<form 
+      className='recover_form'
+      onSubmit={onsubmit_send_code}
+    >
       <h2>Recover your Password</h2>
       <div className='fields'>
         <div className='field text_field username'>
@@ -67,8 +83,7 @@ export default function RecoverPage() {
           <input
             type="text"
             value={username}
-            onChange={username_onchange}
-            required
+            onChange={username_onchange} 
           />
         </div>
       </div>
@@ -76,11 +91,16 @@ export default function RecoverPage() {
       <div className='submit'>
         <button type='submit'>Send Recovery Code</button>
       </div>
-    </form>
-  );
 
-  const confirm_code = () => (
-    <form className='recover_form' onSubmit={onsubmit_confirm_code}>
+    </form>
+    )
+  }
+
+  const confirm_code = () => {
+    return (<form 
+      className='recover_form'
+      onSubmit={onsubmit_confirm_code}
+    >
       <h2>Recover your Password</h2>
       <div className='fields'>
         <div className='field text_field code'>
@@ -88,8 +108,7 @@ export default function RecoverPage() {
           <input
             type="text"
             value={code}
-            onChange={code_onchange}
-            required
+            onChange={code_onchange} 
           />
         </div>
         <div className='field text_field password'>
@@ -97,8 +116,7 @@ export default function RecoverPage() {
           <input
             type="password"
             value={password}
-            onChange={password_onchange}
-            required
+            onChange={password_onchange} 
           />
         </div>
         <div className='field text_field password_again'>
@@ -106,32 +124,35 @@ export default function RecoverPage() {
           <input
             type="password"
             value={passwordAgain}
-            onChange={password_again_onchange}
-            required
+            onChange={password_again_onchange} 
           />
         </div>
       </div>
-      {el_errors}
+      {errors}
       <div className='submit'>
         <button type='submit'>Reset Password</button>
       </div>
     </form>
-  );
+    )
+  }
 
-  const success = () => (
-    <form className='recover_form'>
+  const success = () => {
+    return (<form>
       <p>Your password has been successfully reset!</p>
-      <Link to="/signin" className="proceed">Proceed to Sign In</Link>
+      <Link to="/signin" className="proceed">Proceed to Signin</Link>
     </form>
-  );
+    )
+    }
 
   let form;
   if (formState === 'send_code') {
-    form = send_code();
-  } else if (formState === 'confirm_code') {
-    form = confirm_code();
-  } else if (formState === 'success') {
-    form = success();
+    form = send_code()
+  }
+  else if (formState === 'confirm_code') {
+    form = confirm_code()
+  }
+  else if (formState === 'success') {
+    form = success()
   }
 
   return (
@@ -142,6 +163,7 @@ export default function RecoverPage() {
       <div className='recover-wrapper'>
         {form}
       </div>
+
     </article>
   );
 }
