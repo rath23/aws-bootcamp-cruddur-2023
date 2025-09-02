@@ -23,3 +23,23 @@ Resources:
             Resource: '*'
       Users:
         - !Ref CruddurMachineUser
+
+
+
+# bellow code need to be added or will get error
+
+#         {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Effect": "Allow",
+#             "Action": [
+#                 "logs:CreateLogGroup",
+#                 "logs:CreateLogStream",
+#                 "logs:PutLogEvents",
+#                 "logs:DescribeLogStreams"
+#             ],
+#             "Resource": "arn:aws:logs:ap-south-1:651746472793:log-group:cruddur*"
+#         }
+#     ]
+# }

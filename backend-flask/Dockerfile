@@ -14,8 +14,8 @@
 
 # ───────────────────────────────────────────────────────────
 # Stage 1: Builder Stage — installs dependencies
-# FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-buster AS builder
-FROM python:3.10-slim-buster AS builder
+FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-buster AS builder
+
 
 WORKDIR /app
 COPY requirements.txt .
@@ -23,8 +23,7 @@ RUN pip install --user -r requirements.txt
 
 # ───────────────────────────────────────────────────────────
 # Stage 2: Runtime Stage — minimal, production-ready image
-# FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-buster
-FROM python:3.10-slim-buster 
+FROM 651746472793.dkr.ecr.ap-south-1.amazonaws.com/cruddur-python:3.10-slim-buster
 
 
 WORKDIR /app
