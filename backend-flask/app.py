@@ -15,8 +15,7 @@ from services.message_groups import *
 from services.messages import *
 from services.create_message import *
 from services.show_activity import *
-from services.show_activity import *
-from services.show_activity import *
+from services.update_profile import *
 
 # HoneyComb import
 from opentelemetry import trace
@@ -333,9 +332,8 @@ def data_activities():
 @cross_origin()
 @requires_auth
 def data_activities_reply(activity_uuid):
-    access_token = extract_access_token(request.headers)
-    claims = cognito_jwt_token.verify(access_token)
-    cognito_user_id = claims['sub']
+    user_payload = getattr(request, "user", None)
+    cognito_user_id = user_payload.get("sub")
     message = request.json["message"]
     model = CreateReply.run(message, cognito_user_id, activity_uuid)
     if model["errors"] is not None:
@@ -356,10 +354,9 @@ def data_users_short(handle):
 def data_update_profile():
   bio          = request.json.get('bio',None)
   display_name = request.json.get('display_name',None)
-  access_token = extract_access_token(request.headers)
   try:
-    claims = cognito_jwt_token.verify(access_token)
-    cognito_user_id = claims['sub']
+    user_payload = getattr(request, "user", None)
+    cognito_user_id = user_payload.get("sub")
     UpdateProfile.run(
       cognito_user_id=cognito_user_id,
       bio=bio,

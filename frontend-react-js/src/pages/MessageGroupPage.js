@@ -2,13 +2,13 @@ import './MessageGroupPage.css';
 import React from "react";
 import { useParams } from 'react-router-dom';
 
-import {checkAuth} from '../lib/CheckAuth';
-import DesktopNavigation  from '../components/DesktopNavigation';
-import MessageGroupFeed from '../components/MessageGroupFeed';
-import MessagesFeed from '../components/MessageFeed';
-import MessagesForm from '../components/MessageForm';
-import { getAuthToken } from '../lib/GetAuthToken';
+import {get} from 'lib/Requests';
+import {checkAuth} from 'lib/CheckAuth';
 
+import DesktopNavigation  from 'components/DesktopNavigation';
+import MessageGroupFeed from 'components/MessageGroupFeed';
+import MessagesFeed from 'components/MessageFeed';
+import MessagesForm from 'components/MessageForm';
 
 export default function MessageGroupPage() {
   const [messageGroups, setMessageGroups] = React.useState([]);
@@ -17,49 +17,26 @@ export default function MessageGroupPage() {
   const [user, setUser] = React.useState(null);
   const dataFetchedRef = React.useRef(false);
   const params = useParams();
-  
 
   const loadMessageGroupsData = async () => {
-    try {
-      const token = await getAuthToken();
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/message_groups`
-      const res = await fetch(backend_url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        method: "GET"
-      });
-      let resJson = await res.json();
-      if (res.status === 200) {
-        setMessageGroups(resJson)
-      } else {
-        console.log(res)
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/message_groups`
+    get(url,{
+      auth: true,
+      success: function(data){
+        setMessageGroups(data)
       }
-    } catch (err) {
-      console.log(err);
-    }
-  };  
+    })
+  }
 
   const loadMessageGroupData = async () => {
-    try {
-      const token = await getAuthToken();
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/messages/${params.message_group_uuid}`
-      const res = await fetch(backend_url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        method: "GET"
-      });
-      let resJson = await res.json();
-      if (res.status === 200) {
-        setMessages(resJson)
-      } else {
-        console.log(res)
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/messages/${params.message_group_uuid}`
+    get(url,{
+      auth: true,
+      success: function(data){
+        setMessages(data)
       }
-    } catch (err) {
-      console.log(err);
-    }
-  };  
+    })
+  }
 
   React.useEffect(()=>{
     //prevents double call

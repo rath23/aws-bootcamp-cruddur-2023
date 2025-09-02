@@ -83,3 +83,5 @@ fi
 
 echo "=== Environment setup complete! ==="
 
+
+# import { checkAuth } from '../lib/CheckAuth';

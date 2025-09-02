@@ -1,8 +1,8 @@
 import './ProfileAvatar.css';
 
 export default function ProfileAvatar(props) {
-  const backgroundImage = `url("https://assets.mycruddur.site/avatars/processed/${props.id}.jpg")`;
-  const styles = {
+ const backgroundImage = `url("https://assets.mycruddur.site/avatars/processed/${props.id}.jpg")`;
+   const styles = {
     backgroundImage: backgroundImage,
     backgroundSize: 'cover',
     backgroundPosition: 'center',

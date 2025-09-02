@@ -1,3 +1,5 @@
+
+
 import './ActivityForm.css';
 import React from "react";
 import process from 'process';
@@ -16,7 +18,6 @@ export default function ActivityForm(props) {
   if (240-count < 0){
     classes.push('err')
   }
-
   const onsubmit = async (event) => {
     event.preventDefault();
     const user_handle = localStorage.getItem("handle");

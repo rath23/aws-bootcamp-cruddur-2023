@@ -1,13 +1,14 @@
 import './HomeFeedPage.css';
 import React from "react";
 
-import { checkAuth } from '../lib/CheckAuth';
-import DesktopNavigation from '../components/DesktopNavigation';
-import DesktopSidebar from '../components/DesktopSidebar';
-import ActivityFeed from '../components/ActivityFeed';
-import ActivityForm from '../components/ActivityForm';
-import ReplyForm from '../components/ReplyForm';
-import { getAuthToken } from '../lib/GetAuthToken';
+import DesktopNavigation  from 'components/DesktopNavigation';
+import DesktopSidebar     from 'components/DesktopSidebar';
+import ActivityFeed from 'components/ActivityFeed';
+import ActivityForm from 'components/ActivityForm';
+import ReplyForm from 'components/ReplyForm';
+
+import {get} from 'lib/Requests';
+import {checkAuth} from 'lib/CheckAuth';
 
 export default function HomeFeedPage() {
   const [activities, setActivities] = React.useState([]);
@@ -18,47 +19,23 @@ export default function HomeFeedPage() {
   const dataFetchedRef = React.useRef(false);
 
   const loadData = async () => {
-    // const token = localStorage.getItem("access_token");
-    const token = await getAuthToken();
-    try {
-      const backend_url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`;
-
-      const res = await fetch(backend_url, {
-        method: "GET",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const resJson = await res.json();
-
-      if (res.status === 200) {
-        setActivities(resJson);
-      } else {
-        console.log('Error response:', res);
-        console.log('Error body:', resJson); // Add this for debugging
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/activities/home`
+    get(url,{
+      auth: true,
+      success: function(data){
+        setActivities(data)
       }
-    } catch (err) {
-      console.error('Fetch error:', err);
-    }
-  };
-
-
-
-
-  React.useEffect(() => {
+    })
+  }
+  
+  React.useEffect(()=>{
+    //prevents double call
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
 
     loadData();
-    async function init() {
-      await checkAuth(setUser);
-      console.log("User state set in HomeFeedPage:", user);
-    }
-    init();
-
-  }, []);
+    checkAuth(setUser);
+  }, [])
 
   return (
     <article>

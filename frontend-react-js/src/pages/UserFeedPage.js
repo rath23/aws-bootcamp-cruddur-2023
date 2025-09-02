@@ -10,7 +10,7 @@ import ProfileHeading from 'components/ProfileHeading';
 import ProfileForm from 'components/ProfileForm';
 
 import {get} from 'lib/Requests';
-import { checkAuth } from '../lib/CheckAuth';
+import {checkAuth} from 'lib/CheckAuth';
 
 export default function UserFeedPage() {
   const [activities, setActivities] = React.useState([]);
