@@ -7,7 +7,7 @@ opentelemetry-instrumentation-flask
 opentelemetry-instrumentation-requests
 
 
-urllib3>=2.5.0 
+urllib3>=2.6.3 
 aws-xray-sdk
 
 watchtower
@@ -31,3 +31,4 @@ boto3
 
 
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
+werkzeug>=3.1.5 # not directly required, pinned by Snyk to avoid a vulnerability
