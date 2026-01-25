@@ -1,4 +1,3 @@
-```md
 # 🚀 Cruddur — Full AWS Cloud Deployment
 
 ![Cruddur Graphic](_docs/assets/cruddur-banner.jpg)
@@ -37,7 +36,6 @@ graph TD
     Backend -->|Metrics| Honeycomb[Honeycomb.io]
 
 ```
-
 ### System Diagram
 
 ```text
